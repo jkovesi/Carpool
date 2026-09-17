@@ -1,0 +1,51 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+
+  --color-brand: #FF385C;
+  --color-brand-hover: #E31C5F;
+  --color-brand-light: #FFF0F2;
+
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #F7F7F7;
+  --color-surface-hover: #F0F0F0;
+
+  --color-text-primary: #222222;
+  --color-text-secondary: #717171;
+  --color-text-disabled: #B0B0B0;
+
+  --color-border: #DDDDDD;
+  --color-border-focus: #222222;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: #FFFFFF;
+  color: #222222;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbar but allow scrolling */
+::-webkit-scrollbar { width: 0px; }
+
+/* Csak érték beírásával módosítható number input — nincs fel/le nyilazó spinner. */
+input.no-spinner::-webkit-outer-spin-button,
+input.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input.no-spinner {
+  -moz-appearance: textfield;
+}
