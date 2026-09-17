@@ -1,0 +1,10 @@
+{
+  "description": "Enhances user understanding by providing relevant context and background information to improve clarity and decision-making across various topics.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

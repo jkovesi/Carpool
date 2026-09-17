@@ -1,0 +1,138 @@
+import { useEffect, useState } from "react";
+import type { Session } from "@supabase/supabase-js";
+import { Page } from "./types";
+import { supabase } from "./lib/supabase";
+import { signOut } from "./lib/api";
+import Navbar from "./components/Navbar";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import EmailConfirm from "./pages/EmailConfirm";
+import RideDetail from "./pages/RideDetail";
+import CreateListing from "./pages/CreateListing";
+import Profile from "./pages/Profile";
+import ChangePassword from "./pages/ChangePassword";
+import Vehicles from "./pages/Vehicles";
+import MyListings from "./pages/MyListings";
+import MyBookings from "./pages/MyBookings";
+import EditListing from "./pages/EditListing";
+
+export default function App() {
+  const [currentPage, setCurrentPage] = useState<Page>("home");
+  const [pageStack, setPageStack] = useState<Page[]>([]);
+  const [session, setSession] = useState<Session | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [selectedRideId, setSelectedRideId] = useState<string | null>(null);
+  const [selectedListingId, setSelectedListingId] = useState<string | null>(null);
+  const [pendingEmail, setPendingEmail] = useState("");
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+      setAuthLoading(false);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      setSession(newSession);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, []);
+
+  const isLoggedIn = !!session;
+
+  const navigate = (page: Page) => {
+    setPageStack((s) => [...s, currentPage]);
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Kontextusérzékeny "Vissza": mindig oda ugrik, ahonnan a felhasználó az adott
+  // oldalra navigált — nem egy rögzített szülő oldalra.
+  const goBack = () => {
+    const prev = pageStack[pageStack.length - 1];
+    setPageStack((s) => s.slice(0, -1));
+    setCurrentPage(prev ?? "home");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const selectRide = (id: string) => {
+    setSelectedRideId(id);
+    navigate("ride-detail");
+  };
+
+  const selectListingToEdit = (id: string) => {
+    setSelectedListingId(id);
+    navigate("edit-listing");
+  };
+
+  const logout = async () => {
+    await signOut().catch(() => {});
+    setPageStack([]);
+    setCurrentPage("home");
+  };
+
+  const authPages: Page[] = ["profile", "change-password", "vehicles", "my-listings", "my-bookings", "create-listing", "edit-listing"];
+  const hideNav: Page[] = [];
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-[#717171] text-sm">
+        Betöltés…
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+      {!hideNav.includes(currentPage) && (
+        <Navbar
+          currentPage={currentPage}
+          isLoggedIn={isLoggedIn}
+          navigate={navigate}
+          logout={logout}
+        />
+      )}
+
+      {currentPage === "home" && <Home navigate={navigate} selectRide={selectRide} isLoggedIn={isLoggedIn} />}
+      {currentPage === "login" && <Login navigate={navigate} goBack={goBack} />}
+      {currentPage === "register" && <Register navigate={navigate} goBack={goBack} onRegistered={setPendingEmail} />}
+      {currentPage === "email-confirm" && <EmailConfirm navigate={navigate} email={pendingEmail} />}
+      {currentPage === "ride-detail" && <RideDetail navigate={navigate} goBack={goBack} isLoggedIn={isLoggedIn} rideId={selectedRideId} />}
+
+      {currentPage === "create-listing" && (
+        isLoggedIn
+          ? <CreateListing navigate={navigate} goBack={goBack} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+      {currentPage === "profile" && (
+        isLoggedIn
+          ? <Profile navigate={navigate} goBack={goBack} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+      {currentPage === "change-password" && (
+        isLoggedIn
+          ? <ChangePassword navigate={navigate} goBack={goBack} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+      {currentPage === "vehicles" && (
+        isLoggedIn
+          ? <Vehicles navigate={navigate} goBack={goBack} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+      {currentPage === "my-listings" && (
+        isLoggedIn
+          ? <MyListings navigate={navigate} goBack={goBack} selectListingToEdit={selectListingToEdit} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+      {currentPage === "my-bookings" && (
+        isLoggedIn
+          ? <MyBookings navigate={navigate} goBack={goBack} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+      {currentPage === "edit-listing" && (
+        isLoggedIn
+          ? <EditListing navigate={navigate} goBack={goBack} listingId={selectedListingId} />
+          : <Login navigate={navigate} goBack={goBack} />
+      )}
+    </div>
+  );
+}
