@@ -82,6 +82,7 @@ export async function signUp(params: {
     password,
     options: {
       data: { username, full_name: fullName, phone },
+      emailRedirectTo: window.location.origin,
     },
   });
   if (error) throw new Error(error.message);
@@ -110,9 +111,11 @@ export async function signOut() {
 }
 
 export async function resendConfirmationEmail(email: string) {
-  const { error } = await supabase.auth.resend({ type: "signup", email });
-  friendlyError(error);
-}
+  const { error } = await supabase.auth.resend({
+    type: "signup",
+    email,
+    options: { emailRedirectTo: window.location.origin },
+  });
 
 export async function getMyProfile(): Promise<Profile | null> {
   const { data: userData } = await supabase.auth.getUser();
