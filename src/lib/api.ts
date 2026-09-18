@@ -82,6 +82,9 @@ export async function signUp(params: {
     password,
     options: {
       data: { username, full_name: fullName, phone },
+      // A megerősítő e-mail mindig a tényleges böngésző-címre irányítson
+      // vissza (helyi fejlesztés, Vercel preview vagy éles URL), ne a
+      // Supabase Auth statikus "Site URL" beállítására.
       emailRedirectTo: window.location.origin,
     },
   });
@@ -116,6 +119,8 @@ export async function resendConfirmationEmail(email: string) {
     email,
     options: { emailRedirectTo: window.location.origin },
   });
+  friendlyError(error);
+}
 
 export async function getMyProfile(): Promise<Profile | null> {
   const { data: userData } = await supabase.auth.getUser();
