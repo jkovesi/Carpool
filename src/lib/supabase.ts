@@ -9,4 +9,11 @@ if (!supabaseUrl || !supabaseKey) {
   );
 }
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    // Az e-mail megerősítő linkről visszatérve NE jelentkeztesse be automatikusan
+    // a felhasználót (KAN-2, 4.14) — a linkben lévő tokent az App.tsx saját maga
+    // olvassa ki, majd eldobja, a felhasználó ezután manuálisan jelentkezik be.
+    detectSessionInUrl: false,
+  },
+});

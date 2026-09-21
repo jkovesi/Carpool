@@ -170,8 +170,9 @@ export default function Profile({ navigate }: ProfileProps) {
           <div className="divide-y divide-[#F0F0F0]">
             {[
               { label: "Járműveim", sub: "Regisztrált járművek kezelése", page: "vehicles" as Page },
-              { label: "Hirdetéseim", sub: "Aktív és korábbi hirdetések", page: "my-listings" as Page },
               { label: "Foglalásaim", sub: "Aktív és korábbi foglalások", page: "my-bookings" as Page },
+              { label: "Hirdetéseim", sub: "Aktív és korábbi hirdetések", page: "my-listings" as Page },
+              { label: "Utasaim", sub: "Kik foglaltak helyet a hirdetéseiden", page: "my-passengers" as Page },
             ].map((item) => (
               <button
                 key={item.page}

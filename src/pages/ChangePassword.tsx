@@ -5,9 +5,10 @@ import { changePassword } from "../lib/api";
 interface ChangePasswordProps {
   navigate: (page: Page) => void;
   goBack: () => void;
+  backLabel?: string;
 }
 
-export default function ChangePassword({ goBack }: ChangePasswordProps) {
+export default function ChangePassword({ goBack, backLabel }: ChangePasswordProps) {
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNext, setShowNext] = useState(false);
@@ -60,7 +61,7 @@ export default function ChangePassword({ goBack }: ChangePasswordProps) {
             onClick={goBack}
             className="w-full bg-[#FF385C] hover:bg-[#E31C5F] text-white font-bold py-3.5 rounded-xl transition-colors text-sm"
           >
-            Vissza a profilomhoz
+            {backLabel ?? "Vissza a profilomhoz"}
           </button>
         </div>
       </div>
@@ -75,7 +76,7 @@ export default function ChangePassword({ goBack }: ChangePasswordProps) {
           className="flex items-center gap-2 text-sm text-[#717171] hover:text-[#222222] mb-6 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
-          Vissza
+          {backLabel ?? "Vissza"}
         </button>
 
         <div className="mb-8">

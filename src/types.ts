@@ -10,7 +10,26 @@ export type Page =
   | "vehicles"
   | "my-listings"
   | "my-bookings"
-  | "edit-listing";
+  | "edit-listing"
+  | "my-passengers";
+
+// Kontextusérzékeny "Vissza" gombok felirata: az adott oldalra mutató felirat,
+// amit akkor jelenítünk meg, amikor egy másik oldalról ide navigáltunk vissza.
+export const PAGE_LABELS: Record<Page, string> = {
+  home: "Vissza a főoldalra",
+  login: "Vissza a bejelentkezéshez",
+  register: "Vissza a regisztrációhoz",
+  "email-confirm": "Vissza",
+  "ride-detail": "Vissza a hirdetéshez",
+  "create-listing": "Vissza a hirdetés feladásához",
+  profile: "Vissza a profilhoz",
+  "change-password": "Vissza a jelszó módosításához",
+  vehicles: "Vissza a járműveimhez",
+  "my-listings": "Vissza a hirdetéseimhez",
+  "my-bookings": "Vissza a foglalásaimhoz",
+  "edit-listing": "Vissza a hirdetés szerkesztéséhez",
+  "my-passengers": "Vissza az utasaimhoz",
+};
 
 export interface AppState {
   currentPage: Page;

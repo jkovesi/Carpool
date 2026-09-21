@@ -5,9 +5,11 @@ import { signInWithIdentifier } from "../lib/api";
 interface LoginProps {
   navigate: (page: Page) => void;
   goBack: () => void;
+  notice?: { type: "success" | "error"; message: string } | null;
+  clearNotice?: () => void;
 }
 
-export default function Login({ navigate }: LoginProps) {
+export default function Login({ navigate, notice, clearNotice }: LoginProps) {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPass, setShowPass] = useState(false);
@@ -20,6 +22,7 @@ export default function Login({ navigate }: LoginProps) {
     setLoading(true);
     try {
       await signInWithIdentifier(identifier, password);
+      clearNotice?.();
       navigate("home");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hiba történt a bejelentkezés során.");
@@ -41,6 +44,23 @@ export default function Login({ navigate }: LoginProps) {
           <h1 className="text-2xl font-extrabold text-[#222222]">Üdv vissza!</h1>
           <p className="text-[#717171] text-sm mt-1">Jelentkezz be a fiókodba</p>
         </div>
+
+        {notice && (
+          <div
+            className={`mb-5 flex items-center gap-2 rounded-xl px-4 py-3 border ${
+              notice.type === "success" ? "bg-green-50 border-green-200" : "bg-red-50 border-red-200"
+            }`}
+          >
+            {notice.type === "success" ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" className="flex-shrink-0"><polyline points="20,6 9,17 4,12"/></svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5" className="flex-shrink-0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            )}
+            <span className={`text-sm font-medium ${notice.type === "success" ? "text-green-700" : "text-red-700"}`}>
+              {notice.message}
+            </span>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>

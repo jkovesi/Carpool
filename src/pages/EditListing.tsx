@@ -1,27 +1,29 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
-import { RideDetails, listMyListings, updateListing } from "../lib/api";
+import { RideDetails, getVehicleById, listMyListings, updateListing } from "../lib/api";
 
 interface EditListingProps {
   navigate: (page: Page) => void;
   goBack: () => void;
   listingId: string | null;
+  backLabel?: string;
 }
 
-export default function EditListing({ goBack, listingId }: EditListingProps) {
+export default function EditListing({ goBack, listingId, backLabel }: EditListingProps) {
   const [listing, setListing] = useState<RideDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState({ date: "", time: "", price: "", seats: "" });
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [vehicleSeats, setVehicleSeats] = useState<number | null>(null);
 
   useEffect(() => {
     if (!listingId) {
       setLoading(false);
       return;
     }
-    listMyListings().then((all) => {
+    listMyListings().then(async (all) => {
       const found = all.find((l) => l.id === listingId) ?? null;
       setListing(found);
       if (found) {
@@ -31,10 +33,16 @@ export default function EditListing({ goBack, listingId }: EditListingProps) {
           price: String(found.price_huf),
           seats: String(found.seats_total),
         });
+        if (found.vehicle_id) {
+          const vehicle = await getVehicleById(found.vehicle_id);
+          setVehicleSeats(vehicle?.seats ?? null);
+        }
       }
       setLoading(false);
     });
   }, [listingId]);
+
+  const maxSeats = vehicleSeats ?? 8;
 
   const set = (k: string, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -88,7 +96,7 @@ export default function EditListing({ goBack, listingId }: EditListingProps) {
           className="flex items-center gap-2 text-sm text-[#717171] hover:text-[#222222] mb-6 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
-          Vissza a hirdetéseimhez
+          {backLabel ?? "Vissza a hirdetéseimhez"}
         </button>
 
         <div className="bg-white rounded-2xl border border-[#DDDDDD] overflow-hidden">
@@ -175,11 +183,11 @@ export default function EditListing({ goBack, listingId }: EditListingProps) {
                   value={form.seats}
                   onChange={(e) => set("seats", e.target.value)}
                   min={listing.seats_booked || 1}
-                  max="8"
+                  max={maxSeats}
                   required
                   className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
                 />
-                <p className="text-xs text-[#717171] mt-1">Min. {listing.seats_booked} (már foglalt)</p>
+                <p className="text-xs text-[#717171] mt-1">Min. {listing.seats_booked} (már foglalt) · Max. {maxSeats} (a jármű férőhelye)</p>
               </div>
             </div>
 

@@ -5,9 +5,10 @@ import { Vehicle, createListing, listMyVehicles } from "../lib/api";
 interface CreateListingProps {
   navigate: (page: Page) => void;
   goBack: () => void;
+  backLabel?: string;
 }
 
-export default function CreateListing({ navigate, goBack }: CreateListingProps) {
+export default function CreateListing({ navigate, goBack, backLabel }: CreateListingProps) {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [form, setForm] = useState({
     vehicle: "",
@@ -25,7 +26,24 @@ export default function CreateListing({ navigate, goBack }: CreateListingProps) 
     listMyVehicles().then(setVehicles);
   }, []);
 
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v }));
+  const selectedVehicle = vehicles.find((v) => v.id === form.vehicle);
+  const maxSeats = selectedVehicle?.seats ?? 8;
+
+  const set = (k: string, v: string) => {
+    setForm((f) => {
+      const next = { ...f, [k]: v };
+      // Ha a jármű váltás miatt a korábban beírt szabad helyek száma már
+      // meghaladná az új jármű férőhelyét, korrigáljuk (KAN-14).
+      if (k === "vehicle") {
+        const newVehicle = vehicles.find((veh) => veh.id === v);
+        const newMax = newVehicle?.seats ?? 8;
+        if (next.seats && parseInt(next.seats, 10) > newMax) {
+          next.seats = String(newMax);
+        }
+      }
+      return next;
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +75,7 @@ export default function CreateListing({ navigate, goBack }: CreateListingProps) 
           className="flex items-center gap-2 text-sm text-[#717171] hover:text-[#222222] mb-6 transition-colors"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15,18 9,12 15,6"/></svg>
-          Vissza
+          {backLabel ?? "Vissza"}
         </button>
 
         <div className="bg-white rounded-2xl border border-[#DDDDDD] overflow-hidden">
@@ -173,11 +191,13 @@ export default function CreateListing({ navigate, goBack }: CreateListingProps) 
                   onChange={(e) => set("seats", e.target.value)}
                   placeholder="4"
                   min="1"
-                  max="8"
+                  max={maxSeats}
                   required
                   className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
                 />
-                <p className="text-xs text-[#717171] mt-1">Max. a jármű férőhelyéig (sofőr nélkül)</p>
+                <p className="text-xs text-[#717171] mt-1">
+                  {selectedVehicle ? `Max. ${maxSeats} (${selectedVehicle.type} férőhelye)` : "Max. a jármű férőhelyéig (sofőr nélkül)"}
+                </p>
               </div>
             </div>
 

@@ -38,6 +38,26 @@ export interface RideDetails {
   seats_booked: number;
   seats_available: number;
   created_at: string;
+  // Csak a my_listings nézetben elérhető (saját hirdetés esetén) — a jármű
+  // tényleges férőhely-kapacitásának lekéréséhez (KAN-14).
+  vehicle_id?: string;
+}
+
+export interface Passenger {
+  booking_id: string;
+  listing_id: string;
+  seats_booked: number;
+  booking_status: "active" | "cancelled";
+  created_at: string;
+  from_city: string;
+  to_city: string;
+  ride_date: string;
+  ride_time: string;
+  passenger_id: string;
+  passenger_username: string;
+  passenger_full_name: string | null;
+  passenger_phone: string | null;
+  is_new: boolean;
 }
 
 export interface MyBooking {
@@ -185,6 +205,23 @@ export async function removeVehicle(id: string) {
   friendlyError(error);
 }
 
+export async function updateVehicle(v: { id: string; type: string; plate: string; seats: number; color?: string }) {
+  const { error } = await supabase.rpc("update_vehicle", {
+    p_vehicle_id: v.id,
+    p_type: v.type,
+    p_plate: v.plate,
+    p_seats: v.seats,
+    p_color: v.color || null,
+  });
+  friendlyError(error);
+}
+
+export async function getVehicleById(id: string): Promise<Vehicle | null> {
+  const { data, error } = await supabase.from("vehicles").select("id, type, plate, seats, color").eq("id", id).single();
+  if (error) return null;
+  return data;
+}
+
 // ============================================================
 // Hirdetések keresése / részletek (KAN-4, KAN-5)
 // ============================================================
@@ -286,4 +323,32 @@ export async function listMyBookings(): Promise<MyBooking[]> {
   const { data, error } = await supabase.from("my_bookings").select("*").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+// ============================================================
+// Utasaim (KAN-13)
+// ============================================================
+
+export async function listMyPassengers(listingId?: string): Promise<Passenger[]> {
+  let query = supabase
+    .from("my_passengers")
+    .select("*")
+    .order("ride_date", { ascending: true })
+    .order("ride_time", { ascending: true })
+    .order("created_at", { ascending: true });
+  if (listingId) query = query.eq("listing_id", listingId);
+  const { data, error } = await query;
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+export async function markPassengersViewed() {
+  const { error } = await supabase.rpc("mark_passengers_viewed");
+  friendlyError(error);
+}
+
+export async function countNewPassengers(): Promise<number> {
+  const { data, error } = await supabase.rpc("count_new_passengers");
+  if (error) throw new Error(error.message);
+  return (data as number) ?? 0;
 }

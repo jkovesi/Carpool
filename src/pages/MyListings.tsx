@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { RideDetails, cancelListing, listMyListings } from "../lib/api";
+import placeholderImg from "../assets/ride-placeholder.jpg";
 
 interface MyListingsProps {
   navigate: (page: Page) => void;
   goBack: () => void;
   selectListingToEdit: (id: string) => void;
+  selectListingToPassengers: (id: string) => void;
 }
 
-export default function MyListings({ navigate, selectListingToEdit }: MyListingsProps) {
+export default function MyListings({ navigate, selectListingToEdit, selectListingToPassengers }: MyListingsProps) {
   const [listings, setListings] = useState<RideDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,25 +72,40 @@ export default function MyListings({ navigate, selectListingToEdit }: MyListings
                   {active.map((l) => (
                     <div key={l.id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5">
                       <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1">
-                          <div className="font-bold text-[#222222] text-base">{l.from_city} → {l.to_city}</div>
-                          <div className="text-sm text-[#717171] mt-1">{l.ride_date} · {l.ride_time?.slice(0, 5)}</div>
-                          <div className="flex items-center gap-4 mt-3">
-                            <div className="text-sm">
-                              <span className="font-bold text-[#222222]">{l.price_huf.toLocaleString()} Ft</span>
-                              <span className="text-[#717171]"> / fő</span>
+                        <div className="flex gap-3 flex-1">
+                          <img
+                            src={placeholderImg}
+                            alt=""
+                            className="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-[#F7F7F7]"
+                          />
+                          <div className="flex-1">
+                            <div className="font-bold text-[#222222] text-base">{l.from_city} → {l.to_city}</div>
+                            <div className="text-sm text-[#717171] mt-1">{l.ride_date} · {l.ride_time?.slice(0, 5)}</div>
+                            <div className="flex items-center gap-4 mt-3">
+                              <div className="text-sm">
+                                <span className="font-bold text-[#222222]">{l.price_huf.toLocaleString()} Ft</span>
+                                <span className="text-[#717171]"> / fő</span>
+                              </div>
+                              <div className="text-sm">
+                                <span className="font-bold text-[#222222]">{l.seats_booked}/{l.seats_total}</span>
+                                <span className="text-[#717171]"> hely foglalt</span>
+                              </div>
                             </div>
-                            <div className="text-sm">
-                              <span className="font-bold text-[#222222]">{l.seats_booked}/{l.seats_total}</span>
-                              <span className="text-[#717171]"> hely foglalt</span>
+                            {/* Occupancy bar */}
+                            <div className="mt-3 h-1.5 bg-[#F0F0F0] rounded-full overflow-hidden w-48">
+                              <div
+                                className="h-full bg-[#FF385C] rounded-full transition-all"
+                                style={{ width: `${(l.seats_booked / l.seats_total) * 100}%` }}
+                              />
                             </div>
-                          </div>
-                          {/* Occupancy bar */}
-                          <div className="mt-3 h-1.5 bg-[#F0F0F0] rounded-full overflow-hidden w-48">
-                            <div
-                              className="h-full bg-[#FF385C] rounded-full transition-all"
-                              style={{ width: `${(l.seats_booked / l.seats_total) * 100}%` }}
-                            />
+                            {l.seats_booked > 0 && (
+                              <button
+                                onClick={() => selectListingToPassengers(l.id)}
+                                className="text-xs font-semibold text-[#FF385C] mt-3 hover:underline"
+                              >
+                                Utasaim megtekintése →
+                              </button>
+                            )}
                           </div>
                         </div>
                         <div className="flex flex-col gap-2">
