@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { RideDetails, bookRide, getRideDetails } from "../lib/api";
-import placeholderImg from "../assets/ride-placeholder.jpg";
+import RidePhoto from "../components/RidePhoto";
 
 interface RideDetailProps {
   navigate: (page: Page) => void;
@@ -68,11 +68,7 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId }: Rid
     <div className="min-h-screen bg-[#F7F7F7]">
       {/* Header image */}
       <div className="relative h-64 bg-gray-200">
-        <img
-          src={placeholderImg}
-          alt={`${ride.from_city} – ${ride.to_city}`}
-          className="w-full h-full object-cover"
-        />
+        <RidePhoto destination={ride.to_city} className="w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
         <button
           onClick={goBack}

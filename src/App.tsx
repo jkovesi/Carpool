@@ -180,7 +180,7 @@ export default function App() {
       )}
       {currentPage === "my-bookings" && (
         isLoggedIn
-          ? <MyBookings navigate={navigate} goBack={goBack} />
+          ? <MyBookings navigate={navigate} goBack={goBack} backLabel={backLabel} />
           : <Login navigate={navigate} goBack={goBack} notice={authNotice} clearNotice={() => setAuthNotice(null)} />
       )}
       {currentPage === "edit-listing" && (

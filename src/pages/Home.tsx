@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { RideDetails, listAvailableRides } from "../lib/api";
-import placeholderImg from "../assets/ride-placeholder.jpg";
+import RidePhoto from "../components/RidePhoto";
 
 interface HomeProps {
   navigate: (page: Page) => void;
@@ -138,9 +138,8 @@ export default function Home({ navigate, selectRide, isLoggedIn }: HomeProps) {
               className="text-left group bg-white rounded-2xl overflow-hidden border border-[#DDDDDD] hover:shadow-lg transition-all duration-200"
             >
               <div className="relative h-44 bg-gray-100 overflow-hidden">
-                <img
-                  src={placeholderImg}
-                  alt={`${ride.from_city} – ${ride.to_city}`}
+                <RidePhoto
+                  destination={ride.to_city}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>

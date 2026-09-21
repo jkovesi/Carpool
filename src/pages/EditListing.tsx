@@ -9,6 +9,10 @@ interface EditListingProps {
   backLabel?: string;
 }
 
+function toDateInputValue(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
+
 export default function EditListing({ goBack, listingId, backLabel }: EditListingProps) {
   const [listing, setListing] = useState<RideDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +47,13 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
   }, [listingId]);
 
   const maxSeats = vehicleSeats ?? 8;
+  const locked = (listing?.seats_booked ?? 0) > 0;
+
+  const today = new Date();
+  const minDate = toDateInputValue(today);
+  const maxDateObj = new Date(today);
+  maxDateObj.setDate(maxDateObj.getDate() + 365);
+  const maxDate = toDateInputValue(maxDateObj);
 
   const set = (k: string, v: string) => {
     setForm((f) => ({ ...f, [k]: v }));
@@ -111,7 +122,15 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
               <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             <p className="text-sm text-amber-800 leading-relaxed">
-              A szabad helyek száma <strong>nem csökkenthető</strong> a már lefoglalt helyek ({listing.seats_booked} db) száma alá. Az útvonal (honnan/hova) utólag nem módosítható.
+              {locked ? (
+                <>
+                  Ennek a hirdetésnek már van legalább 1 foglalása, ezért az <strong>ár és az indulás időpontja (dátum, idő) nem módosítható</strong>. Csak a szabad helyek száma növelhető, legfeljebb a jármű férőhelyéig ({maxSeats}).
+                </>
+              ) : (
+                <>
+                  A szabad helyek száma <strong>nem csökkenthető</strong> a már lefoglalt helyek ({listing.seats_booked} db) száma alá. Az útvonal (honnan/hova) utólag nem módosítható. A dátum legfeljebb 365 nappal lehet a mai naptól későbbre.
+                </>
+              )}
             </p>
           </div>
 
@@ -144,8 +163,11 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
+                  min={minDate}
+                  max={maxDate}
                   required
-                  className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
+                  disabled={locked}
+                  className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors disabled:bg-[#F7F7F7] disabled:text-[#717171]"
                 />
               </div>
               <div>
@@ -155,7 +177,8 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
                   value={form.time}
                   onChange={(e) => set("time", e.target.value)}
                   required
-                  className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
+                  disabled={locked}
+                  className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors disabled:bg-[#F7F7F7] disabled:text-[#717171]"
                 />
               </div>
             </div>
@@ -171,7 +194,8 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
                     onChange={(e) => set("price", e.target.value)}
                     min="100"
                     required
-                    className="no-spinner w-full border border-[#DDDDDD] rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:border-[#222222] transition-colors"
+                    disabled={locked}
+                    className="no-spinner w-full border border-[#DDDDDD] rounded-xl px-4 py-3 pr-12 text-sm focus:outline-none focus:border-[#222222] transition-colors disabled:bg-[#F7F7F7] disabled:text-[#717171]"
                   />
                   <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[#717171] text-sm">Ft</span>
                 </div>
@@ -182,12 +206,16 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
                   type="number"
                   value={form.seats}
                   onChange={(e) => set("seats", e.target.value)}
-                  min={listing.seats_booked || 1}
+                  min={locked ? listing.seats_total : (listing.seats_booked || 1)}
                   max={maxSeats}
                   required
                   className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
                 />
-                <p className="text-xs text-[#717171] mt-1">Min. {listing.seats_booked} (már foglalt) · Max. {maxSeats} (a jármű férőhelye)</p>
+                <p className="text-xs text-[#717171] mt-1">
+                  {locked
+                    ? `Min. ${listing.seats_total} (csak növelhető) · Max. ${maxSeats} (a jármű férőhelye)`
+                    : `Min. ${listing.seats_booked} (már foglalt) · Max. ${maxSeats} (a jármű férőhelye)`}
+                </p>
               </div>
             </div>
 

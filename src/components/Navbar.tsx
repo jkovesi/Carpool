@@ -96,7 +96,7 @@ export default function Navbar({ currentPage, isLoggedIn, navigate, logout, open
                   Utasaim
                   <PassengerBadge count={newPassengerCount} />
                 </button>
-                <button onClick={logout} className="text-sm font-medium px-3 py-2 rounded-full text-[#717171] hover:bg-[#F7F7F7] transition-colors">Kilépés</button>
+                <button onClick={logout} className="text-sm font-medium px-3 py-2 rounded-full text-[#717171] hover:bg-[#F7F7F7] transition-colors">Kijelentkezés</button>
               </div>
             </>
           ) : (

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { Vehicle, addVehicle, listMyVehicles, removeVehicle, updateVehicle } from "../lib/api";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 interface VehiclesProps {
   navigate: (page: Page) => void;
@@ -30,6 +31,9 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
   const [editError, setEditError] = useState("");
   const [editSubmitting, setEditSubmitting] = useState(false);
 
+  const [confirmRemoveId, setConfirmRemoveId] = useState<string | null>(null);
+  const [removing, setRemoving] = useState(false);
+
   const refresh = () => {
     setLoading(true);
     listMyVehicles()
@@ -57,9 +61,18 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
     }
   };
 
-  const remove = async (id: string) => {
-    await removeVehicle(id);
-    refresh();
+  const requestRemove = (id: string) => setConfirmRemoveId(id);
+
+  const confirmRemove = async () => {
+    if (!confirmRemoveId) return;
+    setRemoving(true);
+    try {
+      await removeVehicle(confirmRemoveId);
+      setConfirmRemoveId(null);
+      refresh();
+    } finally {
+      setRemoving(false);
+    }
   };
 
   const startEdit = (v: Vehicle) => {
@@ -282,11 +295,12 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
                 </div>
               ) : (
                 <div key={v.id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#F7F7F7] rounded-xl flex items-center justify-center flex-shrink-0">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#717171" strokeWidth="1.5">
-                      <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v9a2 2 0 01-2 2h-2"/>
-                      <circle cx="7.5" cy="17.5" r="2.5"/>
-                      <circle cx="17.5" cy="17.5" r="2.5"/>
+                  <div className="w-12 h-12 bg-[#FFF0F2] rounded-xl flex items-center justify-center flex-shrink-0">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF385C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/>
+                      <path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/>
+                      <circle cx="7.3" cy="15.7" r="1.5"/>
+                      <circle cx="16.7" cy="15.7" r="1.5"/>
                     </svg>
                   </div>
                   <div className="flex-1">
@@ -301,7 +315,7 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
                       Szerkesztés
                     </button>
                     <button
-                      onClick={() => remove(v.id)}
+                      onClick={() => requestRemove(v.id)}
                       className="text-sm font-semibold border border-red-200 text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors whitespace-nowrap"
                     >
                       Törlés
@@ -321,6 +335,15 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={confirmRemoveId !== null}
+        title="Jármű törlése"
+        message="Biztosan törlöd ezt a járművet? Ez nem vonja vissza a rá már feladott hirdetéseket."
+        confirmLabel="Törlés"
+        onConfirm={confirmRemove}
+        onCancel={() => !removing && setConfirmRemoveId(null)}
+      />
     </div>
   );
 }

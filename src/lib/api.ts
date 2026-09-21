@@ -41,6 +41,9 @@ export interface RideDetails {
   // Csak a my_listings nézetben elérhető (saját hirdetés esetén) — a jármű
   // tényleges férőhely-kapacitásának lekéréséhez (KAN-14).
   vehicle_id?: string;
+  // Csak a my_listings nézetben elérhető: active / cancelled / expired
+  // (a hirdetés indulási ideje a múltban van).
+  display_status?: "active" | "cancelled" | "expired";
 }
 
 export interface Passenger {
@@ -48,6 +51,7 @@ export interface Passenger {
   listing_id: string;
   seats_booked: number;
   booking_status: "active" | "cancelled";
+  display_status: "active" | "cancelled" | "expired";
   created_at: string;
   from_city: string;
   to_city: string;
@@ -57,6 +61,7 @@ export interface Passenger {
   passenger_username: string;
   passenger_full_name: string | null;
   passenger_phone: string | null;
+  passenger_email: string | null;
   is_new: boolean;
 }
 
@@ -64,7 +69,7 @@ export interface MyBooking {
   booking_id: string;
   seats_booked: number;
   booking_status: "active" | "cancelled";
-  display_status: "active" | "cancelled" | "closed";
+  display_status: "active" | "cancelled" | "expired";
   listing_id: string;
   from_city: string;
   to_city: string;
@@ -77,6 +82,10 @@ export interface MyBooking {
   driver_id: string;
   driver_username: string;
   driver_full_name: string | null;
+  driver_phone: string | null;
+  driver_email: string | null;
+  seats_total: number;
+  seats_available: number;
   created_at: string;
 }
 
@@ -319,6 +328,14 @@ export async function cancelBooking(bookingId: string) {
   friendlyError(error);
 }
 
+// Utas módosítja a saját foglalásának helyszámát (a hirdetés aktuális
+// szabad kapacitásáig). 0-ra vagy az alá csökkenteni nem lehet ezzel —
+// ahhoz a cancelBooking() használandó.
+export async function updateBooking(bookingId: string, seats: number) {
+  const { error } = await supabase.rpc("update_booking", { p_booking_id: bookingId, p_seats: seats });
+  friendlyError(error);
+}
+
 export async function listMyBookings(): Promise<MyBooking[]> {
   const { data, error } = await supabase.from("my_bookings").select("*").order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
@@ -330,12 +347,8 @@ export async function listMyBookings(): Promise<MyBooking[]> {
 // ============================================================
 
 export async function listMyPassengers(listingId?: string): Promise<Passenger[]> {
-  let query = supabase
-    .from("my_passengers")
-    .select("*")
-    .order("ride_date", { ascending: true })
-    .order("ride_time", { ascending: true })
-    .order("created_at", { ascending: true });
+  // Legfrissebb foglalás legfelül (kategóriánként a frontend csoportosít).
+  let query = supabase.from("my_passengers").select("*").order("created_at", { ascending: false });
   if (listingId) query = query.eq("listing_id", listingId);
   const { data, error } = await query;
   if (error) throw new Error(error.message);

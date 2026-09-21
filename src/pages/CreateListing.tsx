@@ -29,6 +29,12 @@ export default function CreateListing({ navigate, goBack, backLabel }: CreateLis
   const selectedVehicle = vehicles.find((v) => v.id === form.vehicle);
   const maxSeats = selectedVehicle?.seats ?? 8;
 
+  const today = new Date();
+  const minDate = today.toISOString().slice(0, 10);
+  const maxDateObj = new Date(today);
+  maxDateObj.setDate(maxDateObj.getDate() + 365);
+  const maxDate = maxDateObj.toISOString().slice(0, 10);
+
   const set = (k: string, v: string) => {
     setForm((f) => {
       const next = { ...f, [k]: v };
@@ -150,6 +156,8 @@ export default function CreateListing({ navigate, goBack, backLabel }: CreateLis
                   type="date"
                   value={form.date}
                   onChange={(e) => set("date", e.target.value)}
+                  min={minDate}
+                  max={maxDate}
                   required
                   className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
                 />
