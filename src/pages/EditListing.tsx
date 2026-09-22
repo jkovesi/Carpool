@@ -201,7 +201,7 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-[#222222] mb-1.5">Szabad helyek</label>
+                <label className="block text-sm font-semibold text-[#222222] mb-1.5">Maximális szabad helyek</label>
                 <input
                   type="number"
                   value={form.seats}

@@ -18,6 +18,9 @@ export interface Vehicle {
   plate: string;
   seats: number;
   color: string | null;
+  // Csak a my_vehicles nézetben elérhető: van-e a járműhöz tartozó AKTÍV
+  // hirdetés — ha igen, a jármű se nem szerkeszthető, se nem törölhető.
+  has_active_listing?: boolean;
 }
 
 export interface RideDetails {
@@ -50,8 +53,10 @@ export interface Passenger {
   booking_id: string;
   listing_id: string;
   seats_booked: number;
-  booking_status: "active" | "cancelled";
-  display_status: "active" | "cancelled" | "expired";
+  booking_status: "active" | "cancelled" | "listing_cancelled";
+  // "removed" = a sofőr törölte a teljes hirdetést ("Törölt"), szemben a
+  // "cancelled"-del, amikor maga az utas mondta le a foglalását ("Lemondva").
+  display_status: "active" | "cancelled" | "expired" | "removed";
   created_at: string;
   from_city: string;
   to_city: string;
@@ -68,8 +73,10 @@ export interface Passenger {
 export interface MyBooking {
   booking_id: string;
   seats_booked: number;
-  booking_status: "active" | "cancelled";
-  display_status: "active" | "cancelled" | "expired";
+  booking_status: "active" | "cancelled" | "listing_cancelled";
+  // "removed" = a sofőr törölte a teljes hirdetést ("Törölt"), szemben a
+  // "cancelled"-del, amikor maga az utas mondta le a foglalását ("Lemondva").
+  display_status: "active" | "cancelled" | "expired" | "removed";
   listing_id: string;
   from_city: string;
   to_city: string;
@@ -189,8 +196,8 @@ export async function changePassword(currentPassword: string, newPassword: strin
 
 export async function listMyVehicles(): Promise<Vehicle[]> {
   const { data, error } = await supabase
-    .from("vehicles")
-    .select("id, type, plate, seats, color")
+    .from("my_vehicles")
+    .select("id, type, plate, seats, color, has_active_listing")
     .order("created_at", { ascending: true });
   if (error) throw new Error(error.message);
   return data ?? [];
@@ -209,8 +216,10 @@ export async function addVehicle(v: { type: string; plate: string; seats: number
   friendlyError(error);
 }
 
+// Jármű törlése — aktív hirdetés esetén a szerveroldali RPC elutasítja
+// (item 5, 2. kör).
 export async function removeVehicle(id: string) {
-  const { error } = await supabase.from("vehicles").delete().eq("id", id);
+  const { error } = await supabase.rpc("remove_vehicle", { p_vehicle_id: id });
   friendlyError(error);
 }
 

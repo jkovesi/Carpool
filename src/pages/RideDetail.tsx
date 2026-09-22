@@ -112,11 +112,12 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId }: Rid
           <div className="bg-white rounded-2xl p-5 border border-[#DDDDDD]">
             <h2 className="text-lg font-bold text-[#222222] mb-4">Jármű</h2>
             <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-[#F7F7F7] rounded-2xl flex items-center justify-center">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#717171" strokeWidth="1.5">
-                  <path d="M5 17H3a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v9a2 2 0 01-2 2h-2"/>
-                  <circle cx="7.5" cy="17.5" r="2.5"/>
-                  <circle cx="17.5" cy="17.5" r="2.5"/>
+              <div className="w-14 h-14 bg-[#FFF0F2] rounded-2xl flex items-center justify-center">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF385C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/>
+                  <path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/>
+                  <circle cx="7.3" cy="15.7" r="1.5"/>
+                  <circle cx="16.7" cy="15.7" r="1.5"/>
                 </svg>
               </div>
               <div>

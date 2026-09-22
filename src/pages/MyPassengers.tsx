@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { Passenger, listMyPassengers, markPassengersViewed } from "../lib/api";
+import { compareByRideThenCreatedDesc } from "../lib/sort";
 
 interface MyPassengersProps {
   navigate: (page: Page) => void;
@@ -9,17 +10,15 @@ interface MyPassengersProps {
   listingId: string | null;
 }
 
-const STATUS_LABEL: Record<"active" | "cancelled" | "expired", string> = {
+const STATUS_LABEL: Record<"active" | "cancelled" | "expired" | "removed", string> = {
   active: "Aktív",
   cancelled: "Lemondva",
   expired: "Lejárt",
+  removed: "Törölt",
 };
 
-const GROUP_LABEL: Record<"active" | "cancelled" | "expired", string> = {
-  active: "Aktív",
-  cancelled: "Lemondott",
-  expired: "Lejárt",
-};
+const compareActive = compareByRideThenCreatedDesc<Passenger>("asc");
+const comparePast = compareByRideThenCreatedDesc<Passenger>("desc");
 
 export default function MyPassengers({ goBack, backLabel, listingId }: MyPassengersProps) {
   const [passengers, setPassengers] = useState<Passenger[]>([]);
@@ -37,9 +36,14 @@ export default function MyPassengers({ goBack, backLabel, listingId }: MyPasseng
     markPassengersViewed().catch(() => {});
   }, [listingId]);
 
-  const active = passengers.filter((p) => p.display_status === "active");
-  const cancelled = passengers.filter((p) => p.display_status === "cancelled");
-  const expired = passengers.filter((p) => p.display_status === "expired");
+  const active = passengers.filter((p) => p.display_status === "active").sort(compareActive);
+  // Lemondva + Lejárt + Törölt (a sofőr által) — egy összevont blokk, az
+  // utazás időpontja szerint csökkenő sorrendben, azon belül (ugyanazon a
+  // hirdetésen belül) a foglalás/módosítás időpontja szerint szintén
+  // csökkenő sorrendben — ugyanaz a másodlagos rendezés, mint az aktívnál.
+  const past = passengers
+    .filter((p) => p.display_status !== "active")
+    .sort(comparePast);
 
   // Csak akkor jelenjen meg a vissza gomb, ha egy konkrét hirdetés utasait
   // nézzük (a hirdetéseim listából érkeztünk). A globális "Utasaim" nézetnél
@@ -86,7 +90,7 @@ export default function MyPassengers({ goBack, backLabel, listingId }: MyPasseng
           <>
             {active.length > 0 && (
               <div className="mb-8">
-                <h2 className="text-sm font-bold text-[#222222] uppercase tracking-wider mb-3">{GROUP_LABEL.active}</h2>
+                <h2 className="text-sm font-bold text-[#222222] uppercase tracking-wider mb-3">Aktív</h2>
                 <div className="space-y-3">
                   {active.map((p) => (
                     <div key={p.booking_id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5">
@@ -126,35 +130,15 @@ export default function MyPassengers({ goBack, backLabel, listingId }: MyPasseng
               </div>
             )}
 
-            {expired.length > 0 && (
-              <div className="mb-8">
-                <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">{GROUP_LABEL.expired}</h2>
-                <div className="space-y-3">
-                  {expired.map((p) => (
-                    <div key={p.booking_id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5 opacity-60">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <div className="font-bold text-[#222222]">{p.passenger_full_name ?? p.passenger_username}</div>
-                          <div className="text-sm text-[#717171] mt-1">
-                            {p.seats_booked} hely{!listingId ? ` · ${p.from_city} → ${p.to_city}` : ""}
-                          </div>
-                          {p.passenger_email && <div className="text-xs text-[#717171] mt-0.5">{p.passenger_email}</div>}
-                        </div>
-                        <span className="text-xs font-semibold bg-[#F0F0F0] text-[#717171] px-3 py-1 rounded-full whitespace-nowrap">
-                          {STATUS_LABEL[p.display_status]}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {cancelled.length > 0 && (
+            {/* Korábbi: Lemondva + Lejárt + Törölt (a sofőr által)
+                összevontan, az utazás időpontja szerint csökkenő, azon belül
+                a foglalás/módosítás időpontja szerint szintén csökkenő
+                sorrendben — soronként saját címkével. */}
+            {past.length > 0 && (
               <div>
-                <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">{GROUP_LABEL.cancelled}</h2>
+                <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">Korábbi</h2>
                 <div className="space-y-3">
-                  {cancelled.map((p) => (
+                  {past.map((p) => (
                     <div key={p.booking_id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5 opacity-60">
                       <div className="flex items-center justify-between">
                         <div>

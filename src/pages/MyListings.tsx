@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { RideDetails, cancelListing, listMyListings } from "../lib/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { compareRideAsc, compareRideDesc } from "../lib/sort";
 
 interface MyListingsProps {
   navigate: (page: Page) => void;
@@ -53,13 +54,12 @@ export default function MyListings({ navigate, selectListingToEdit, selectListin
     }
   };
 
-  const active = listings.filter((l) => l.display_status === "active");
-  const cancelled = listings.filter((l) => l.display_status === "cancelled");
-  const expired = listings.filter((l) => l.display_status === "expired");
-  const pastGroups: { key: "cancelled" | "expired"; items: RideDetails[] }[] = [
-    { key: "cancelled", items: cancelled },
-    { key: "expired", items: expired },
-  ];
+  const active = listings.filter((l) => l.display_status === "active").sort(compareRideAsc);
+  // Lejárt + Törölt — egy összevont blokk, az utazás időpontja szerint
+  // csökkenő sorrendben, soronként saját címkével (Foglalásaim mintájára).
+  const past = listings
+    .filter((l) => l.display_status === "cancelled" || l.display_status === "expired")
+    .sort(compareRideDesc);
 
   return (
     <div className="min-h-screen bg-[#F7F7F7] py-10 px-4">
@@ -97,11 +97,11 @@ export default function MyListings({ navigate, selectListingToEdit, selectListin
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex gap-3 flex-1">
                           <div className="w-14 h-14 rounded-xl flex-shrink-0 bg-[#FFF0F2] flex items-center justify-center">
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF385C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M3 12h4l2-6h6l2 6h4" />
-                              <path d="M5 12v5a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h8v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-5" />
-                              <circle cx="7.5" cy="16" r="1.3" />
-                              <circle cx="16.5" cy="16" r="1.3" />
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#FF385C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/>
+                              <path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/>
+                              <circle cx="7.3" cy="15.7" r="1.5"/>
+                              <circle cx="16.7" cy="15.7" r="1.5"/>
                             </svg>
                           </div>
                           <div className="flex-1">
@@ -169,29 +169,34 @@ export default function MyListings({ navigate, selectListingToEdit, selectListin
               </div>
             )}
 
-            {/* Törölt / Lejárt — külön kategóriánként */}
-            {pastGroups.map(({ key, items }) =>
-              items.length > 0 ? (
-                <div key={key} className="mb-8">
-                  <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">{CATEGORY_LABEL[key]}</h2>
-                  <div className="space-y-3">
-                    {items.map((l) => (
+            {/* Korábbi: Lejárt + Törölt összevontan, az utazás időpontja
+                szerint csökkenő sorrendben, soronként saját címkével. */}
+            {past.length > 0 && (
+              <div className="mb-8">
+                <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">Korábbi</h2>
+                <div className="space-y-3">
+                  {past.map((l) => {
+                    const category = l.display_status as "cancelled" | "expired";
+                    return (
                       <div key={l.id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5 opacity-60">
                         <div className="flex items-center justify-between">
                           <div>
                             <div className="font-bold text-[#222222]">{l.from_city} → {l.to_city}</div>
                             <div className="text-sm text-[#717171] mt-1">{l.ride_date} · {l.ride_time?.slice(0, 5)}</div>
-                            <div className="text-sm text-[#717171] mt-1">{l.price_huf.toLocaleString()} Ft / fő · {l.seats_booked} foglalás volt</div>
+                            <div className="text-sm text-[#717171] mt-1">
+                              {l.price_huf.toLocaleString()} Ft / fő
+                              {category === "expired" ? ` · ${l.seats_booked} foglalás volt` : ""}
+                            </div>
                           </div>
                           <span className="text-xs font-semibold bg-[#F0F0F0] text-[#717171] px-3 py-1 rounded-full whitespace-nowrap">
-                            {CATEGORY_LABEL[key]}
+                            {CATEGORY_LABEL[category]}
                           </span>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              ) : null,
+              </div>
             )}
           </>
         )}

@@ -294,33 +294,44 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
                   </form>
                 </div>
               ) : (
-                <div key={v.id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-[#FFF0F2] rounded-xl flex items-center justify-center flex-shrink-0">
-                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF385C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/>
-                      <path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/>
-                      <circle cx="7.3" cy="15.7" r="1.5"/>
-                      <circle cx="16.7" cy="15.7" r="1.5"/>
-                    </svg>
+                <div key={v.id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-[#FFF0F2] rounded-xl flex items-center justify-center flex-shrink-0">
+                      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FF385C" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/>
+                        <path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/>
+                        <circle cx="7.3" cy="15.7" r="1.5"/>
+                        <circle cx="16.7" cy="15.7" r="1.5"/>
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-[#222222]">{v.type}{v.color ? ` · ${v.color}` : ""}</div>
+                      <div className="text-sm text-[#717171] mt-0.5">{v.seats} férőhely · Rendszám: {v.plate}</div>
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <button
+                        onClick={() => startEdit(v)}
+                        disabled={v.has_active_listing}
+                        title={v.has_active_listing ? "Aktív hirdetés miatt nem szerkeszthető" : undefined}
+                        className="text-sm font-semibold border border-[#DDDDDD] text-[#222222] px-3 py-2 rounded-xl hover:bg-[#F7F7F7] disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors whitespace-nowrap"
+                      >
+                        Szerkesztés
+                      </button>
+                      <button
+                        onClick={() => requestRemove(v.id)}
+                        disabled={v.has_active_listing}
+                        title={v.has_active_listing ? "Aktív hirdetés miatt nem törölhető" : undefined}
+                        className="text-sm font-semibold border border-red-200 text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors whitespace-nowrap"
+                      >
+                        Törlés
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <div className="font-bold text-[#222222]">{v.type}{v.color ? ` · ${v.color}` : ""}</div>
-                    <div className="text-sm text-[#717171] mt-0.5">{v.seats} férőhely · Rendszám: {v.plate}</div>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() => startEdit(v)}
-                      className="text-sm font-semibold border border-[#DDDDDD] text-[#222222] px-3 py-2 rounded-xl hover:bg-[#F7F7F7] transition-colors whitespace-nowrap"
-                    >
-                      Szerkesztés
-                    </button>
-                    <button
-                      onClick={() => requestRemove(v.id)}
-                      className="text-sm font-semibold border border-red-200 text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors whitespace-nowrap"
-                    >
-                      Törlés
-                    </button>
-                  </div>
+                  {v.has_active_listing && (
+                    <div className="mt-3 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      Ez a jármű aktív hirdetésen szerepel, ezért jelenleg nem szerkeszthető és nem törölhető.
+                    </div>
+                  )}
                 </div>
               ),
             )}

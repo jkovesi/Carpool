@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Page } from "../types";
 import { MyBooking, cancelBooking, listMyBookings, updateBooking } from "../lib/api";
 import ConfirmDialog from "../components/ConfirmDialog";
+import { compareRideAsc, compareRideDesc } from "../lib/sort";
 
 interface MyBookingsProps {
   navigate: (page: Page) => void;
@@ -9,9 +10,10 @@ interface MyBookingsProps {
   backLabel?: string;
 }
 
-const STATUS_LABEL: Record<"cancelled" | "expired", string> = {
+const STATUS_LABEL: Record<"cancelled" | "expired" | "removed", string> = {
   cancelled: "Lemondva",
   expired: "Lejárt",
+  removed: "Törölt",
 };
 
 type ConfirmState =
@@ -86,8 +88,8 @@ export default function MyBookings({ navigate, goBack, backLabel }: MyBookingsPr
     }
   };
 
-  const active = bookings.filter((b) => b.display_status === "active");
-  const closedOrCancelled = bookings.filter((b) => b.display_status !== "active");
+  const active = bookings.filter((b) => b.display_status === "active").sort(compareRideAsc);
+  const closedOrCancelled = bookings.filter((b) => b.display_status !== "active").sort(compareRideDesc);
 
   return (
     <div className="min-h-screen bg-[#F7F7F7] py-10 px-4">
@@ -132,6 +134,22 @@ export default function MyBookings({ navigate, goBack, backLabel }: MyBookingsPr
                                 {b.seats_booked} hely · {(b.price_huf * b.seats_booked).toLocaleString()} Ft összesen
                               </div>
                             </div>
+                            {!isEditing && (
+                              <div className="flex flex-col gap-2 flex-shrink-0">
+                                <button
+                                  onClick={() => startEdit(b)}
+                                  className="text-sm font-semibold border border-[#DDDDDD] text-[#222222] px-3 py-2 rounded-xl hover:bg-[#F7F7F7] transition-colors whitespace-nowrap"
+                                >
+                                  Szerkesztés
+                                </button>
+                                <button
+                                  onClick={() => requestCancel(b)}
+                                  className="text-sm font-semibold border border-red-200 text-red-500 px-3 py-2 rounded-xl hover:bg-red-50 transition-colors whitespace-nowrap"
+                                >
+                                  Lemondás
+                                </button>
+                              </div>
+                            )}
                           </div>
 
                           {/* Driver / vehicle info */}
@@ -213,23 +231,6 @@ export default function MyBookings({ navigate, goBack, backLabel }: MyBookingsPr
                             </div>
                           )}
                         </div>
-
-                        {!isEditing && (
-                          <div className="px-5 pb-5 flex flex-col gap-2">
-                            <button
-                              onClick={() => startEdit(b)}
-                              className="w-full border border-[#DDDDDD] text-[#222222] font-semibold py-2.5 rounded-xl hover:bg-[#F7F7F7] transition-colors text-sm"
-                            >
-                              Szerkesztés
-                            </button>
-                            <button
-                              onClick={() => requestCancel(b)}
-                              className="w-full border border-red-200 text-red-500 font-semibold py-2.5 rounded-xl hover:bg-red-50 transition-colors text-sm"
-                            >
-                              Lemondás
-                            </button>
-                          </div>
-                        )}
                       </div>
                     );
                   })}
@@ -251,10 +252,12 @@ export default function MyBookings({ navigate, goBack, backLabel }: MyBookingsPr
               </div>
             )}
 
-            {/* Past: lemondott vagy lejárt */}
+            {/* Korábbi: lemondva / lejárt / törölt (a sofőr által) — összevontan,
+                az utazás időpontja szerint csökkenő sorrendben, egyedi
+                státusz-címkével soronként. */}
             {closedOrCancelled.length > 0 && (
               <div>
-                <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">Lemondott / lejárt</h2>
+                <h2 className="text-sm font-bold text-[#717171] uppercase tracking-wider mb-3">Korábbi</h2>
                 <div className="space-y-3">
                   {closedOrCancelled.map((b) => (
                     <div key={b.booking_id} className="bg-white rounded-2xl border border-[#DDDDDD] p-5 opacity-60">
@@ -265,7 +268,7 @@ export default function MyBookings({ navigate, goBack, backLabel }: MyBookingsPr
                           <div className="text-sm text-[#717171] mt-1">{b.seats_booked} hely · {b.driver_username}</div>
                         </div>
                         <span className="text-xs font-semibold bg-[#F0F0F0] text-[#717171] px-3 py-1 rounded-full whitespace-nowrap">
-                          {STATUS_LABEL[b.display_status as "cancelled" | "expired"]}
+                          {STATUS_LABEL[b.display_status as "cancelled" | "expired" | "removed"]}
                         </span>
                       </div>
                     </div>
