@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Telekocsi — Ride-sharing platform</title>
+<meta name="description" content="Telekocsi is a ride-sharing web app connecting drivers and passengers for everyday trips — built with React, TypeScript and Supabase, developed through a specification-driven, iterative workflow." />
+<link rel="stylesheet" href="assets/style.css" />
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#top">
+      <span class="brand-mark">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/>
+          <path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/>
+          <circle cx="7.3" cy="15.7" r="1.5"/>
+          <circle cx="16.7" cy="15.7" r="1.5"/>
+        </svg>
+      </span>
+      Telekocsi
+    </a>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#screenshots">Screenshots</a></li>
+      <li><a href="#stack">Tech Stack</a></li>
+      <li><a href="#process">Development Process</a></li>
+      <li><a href="#roadmap">Roadmap</a></li>
+    </ul>
+    <a class="nav-cta" href="https://github.com/jkovesi/Carpool" target="_blank" rel="noopener">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow">Open source · carpooling</span>
+    <h1>Telekocsi</h1>
+    <p class="lead">
+      A ride-sharing web app that connects drivers and passengers for everyday trips —
+      list a ride, book a seat, and exchange contact details automatically, with no
+      payment integration and no approval step to slow it down.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/jkovesi/Carpool" target="_blank" rel="noopener">View source on GitHub</a>
+      <a class="btn btn-ghost" href="#features">Explore features</a>
+    </div>
+    <div class="badges">
+      <span class="badge">React 19</span>
+      <span class="badge">TypeScript</span>
+      <span class="badge">Vite</span>
+      <span class="badge">Tailwind CSS v4</span>
+      <span class="badge">Supabase</span>
+      <span class="badge">PostgreSQL</span>
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">What it is</span>
+      <h2>Simple, trust-based ride-sharing</h2>
+      <p>
+        Telekocsi solves a narrow, everyday problem: getting a small group of people
+        from A to B without the overhead of a full ride-hailing platform. Anyone with a
+        registered vehicle can list a ride; anyone else can book a seat on it instantly.
+        Payment happens off-platform, in cash — the app's job is matching people and
+        getting contact details into the right hands the moment a booking is confirmed.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Features</span>
+      <h2>What you can do in the app</h2>
+      <p>A walkthrough of the core flows, from the perspective of a driver or a passenger.</p>
+    </div>
+    <div class="feature-grid">
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </div>
+        <h3>Accounts &amp; verification</h3>
+        <p>Sign up with a username, email and phone number, confirm your email through a verification link, and log in with either your username or email.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.3-3.9A2 2 0 0 1 8.2 5.7h7.6a2 2 0 0 1 1.9 1.4L19 11"/><path d="M3 11h18v4.5a1 1 0 0 1-1 1h-1a1 1 0 0 1-1-1V15H6v.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V11z"/><circle cx="7.3" cy="15.7" r="1.5"/><circle cx="16.7" cy="15.7" r="1.5"/></svg>
+        </div>
+        <h3>Vehicle management</h3>
+        <p>Add one or more vehicles to your account. A vehicle can be freely edited or removed — until it's tied to an active listing, at which point it's locked to protect passengers who already booked.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M2 12h20"/><circle cx="12" cy="12" r="9"/></svg>
+        </div>
+        <h3>Ride listings</h3>
+        <p>Create a listing for a specific trip: route, date, price per seat and the vehicle to use. Seat count defaults to the vehicle's capacity and can be adjusted before anyone books.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+        </div>
+        <h3>Search &amp; filtering</h3>
+        <p>Browse upcoming rides sorted by departure time, and filter by origin, destination, date range or minimum available seats.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+        </div>
+        <h3>Instant booking</h3>
+        <p>No approval step — a seat is booked the moment you request it, as long as capacity allows. Booking again on the same listing merges into your existing booking instead of creating a duplicate.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+        </div>
+        <h3>Automatic contact sharing</h3>
+        <p>Once a booking is confirmed, both sides automatically receive each other's phone number and email by mail — and the passenger sees the vehicle's license plate.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>
+        </div>
+        <h3>Cancellations, done carefully</h3>
+        <p>Every irreversible action — cancelling a booking, deleting a listing — asks for confirmation first. A driver-cancelled listing marks affected bookings as "Removed", clearly distinct from a passenger's own "Cancelled".</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v16"/></svg>
+        </div>
+        <h3>Unified activity lists</h3>
+        <p>"My Bookings", "My Listings" and "My Passengers" all follow the same pattern: an upcoming block sorted soonest-first, and a combined past block below it — no separate tabs to hunt through.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="screenshots">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">In the app</span>
+      <h2>Screenshots</h2>
+      <p>Drop PNGs into <code>docs/assets/screenshots/</code> with the filenames below and they'll appear here.</p>
+    </div>
+    <div class="shot-grid">
+
+      <div class="shot">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <strong>Ride search</strong>
+        <span>Add <code>listing-search.png</code></span>
+      </div>
+
+      <div class="shot">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <strong>My Bookings</strong>
+        <span>Add <code>my-bookings.png</code></span>
+      </div>
+
+      <div class="shot">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <strong>My Listings</strong>
+        <span>Add <code>my-listings.png</code></span>
+      </div>
+
+      <div class="shot">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        <strong>My Passengers</strong>
+        <span>Add <code>my-passengers.png</code></span>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="stack">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">Under the hood</span>
+      <h2>Tech stack</h2>
+      <p>A small, modern stack chosen to keep the app fast to build and cheap to run.</p>
+    </div>
+    <div class="stack-columns">
+
+      <div class="stack-card">
+        <h3>Frontend</h3>
+        <ul class="stack-list">
+          <li><b>React 19</b><span>Component-driven UI, function components with hooks</span></li>
+          <li><b>TypeScript</b><span>Typed data models shared across pages and API calls</span></li>
+          <li><b>Vite</b><span>Dev server and production bundler</span></li>
+          <li><b>Tailwind CSS v4</b><span>Utility-first styling, no separate design-token layer</span></li>
+        </ul>
+      </div>
+
+      <div class="stack-card">
+        <h3>Backend</h3>
+        <ul class="stack-list">
+          <li><b>Supabase</b><span>Hosted Postgres, auth and instant REST/RPC access</span></li>
+          <li><b>PostgreSQL</b><span>Schema, views and business logic close to the data</span></li>
+          <li><b>Row-Level Security</b><span>Access rules enforced at the database layer</span></li>
+          <li><b>RPC functions</b><span>Server-side logic for booking, cancellation and locking rules</span></li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section id="process">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">How it was built</span>
+      <h2>Development process</h2>
+      <p>Telekocsi wasn't built from a fixed spec handed down once — it grew through
+      repeated rounds of feedback, each one traceable from requirement to ticket to code.</p>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-step">
+        <span class="tl-num">1</span>
+        <h3>Starting scaffold</h3>
+        <p>The frontend began as a design exported from Figma Make, giving the project a working React/Vite/Tailwind base and a set of UI screens to build real functionality behind.</p>
+      </div>
+      <div class="tl-step">
+        <span class="tl-num">2</span>
+        <h3>Requirements analysis</h3>
+        <p>A structured requirements interview turned the initial idea into a formal system-analysis specification: data model, main process flow and numbered business rules — the single source of truth for how the app should behave.</p>
+      </div>
+      <div class="tl-step">
+        <span class="tl-num">3</span>
+        <h3>Iterative feedback rounds</h3>
+        <p>As real usage surfaced gaps and edge cases, feedback was batched into versioned rounds (currently at <code>v7</code>). Each round adds or amends numbered rules in the specification and is broken down into a matching set of backlog tickets.</p>
+      </div>
+      <div class="tl-step">
+        <span class="tl-num">4</span>
+        <h3>Tracked backlog</h3>
+        <p>Every feature and fix lives as a ticket with user-story wording and Given/When/Then acceptance criteria, cross-referenced back to the specification's rule numbers — so any change is traceable in both directions.</p>
+      </div>
+      <div class="tl-step">
+        <span class="tl-num">5</span>
+        <h3>Implementation &amp; verification</h3>
+        <p>Changes land as database migrations (schema, Row-Level Security, RPC functions) alongside the React frontend, checked with strict type-checking and a production build before being considered done.</p>
+      </div>
+    </div>
+
+    <div class="cycle-note">
+      <strong>The loop, in short:</strong> feedback comes in → the specification is updated →
+      backlog tickets are created or amended → the database and frontend are implemented →
+      the change is verified end-to-end. Development was carried out with AI-assisted,
+      agentic tooling throughout, which is what made keeping specification, backlog and
+      code in sync across seven iterations practical rather than a maintenance burden.
+    </div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">What's next</span>
+      <h2>Roadmap</h2>
+      <p>Deliberately out of scope for the current version, but planned for a later phase.</p>
+    </div>
+    <ul class="roadmap-list">
+      <li><b>Ratings &amp; trust:</b> a star rating for drivers and passengers after a completed trip.</li>
+      <li><b>Moderation:</b> admin tooling to remove abusive listings and suspend accounts that break the rules.</li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <p>Telekocsi is open source — <a href="https://github.com/jkovesi/Carpool" target="_blank" rel="noopener">browse the code on GitHub</a>.</p>
+  </div>
+</footer>
+
+</body>
+</html>
