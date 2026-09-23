@@ -186,6 +186,7 @@ export default function MyListings({ navigate, selectListingToEdit, selectListin
                             <div className="text-sm text-[#717171] mt-1">
                               {l.price_huf.toLocaleString()} Ft / fő
                               {category === "expired" ? ` · ${l.seats_booked} foglalás volt` : ""}
+                              {category === "cancelled" ? ` · ${l.cancelled_seats_snapshot ?? 0} foglalás volt` : ""}
                             </div>
                           </div>
                           <span className="text-xs font-semibold bg-[#F0F0F0] text-[#717171] px-3 py-1 rounded-full whitespace-nowrap">

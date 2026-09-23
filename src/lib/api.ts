@@ -52,6 +52,12 @@ export interface RideDetails {
   // Csak a my_listings nézetben elérhető: active / cancelled / expired
   // (a hirdetés indulási ideje a múltban van).
   display_status?: "active" | "cancelled" | "expired";
+  // Csak törölt hirdetéseknél töltődik ki: a törlés pillanatában aktív
+  // foglalásokban lefoglalt helyek összesített száma — mivel törléskor az
+  // érintett foglalások "listing_cancelled" állapotba kerülnek, és emiatt a
+  // seats_booked (csak aktív foglalásokból számított) mező ezután 0-t
+  // mutatna. A funkció bevezetése előtt törölt hirdetéseknél null (KAN-37).
+  cancelled_seats_snapshot?: number | null;
 }
 
 export interface Passenger {

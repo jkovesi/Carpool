@@ -144,7 +144,7 @@ export default function MyPassengers({ goBack, backLabel, listingId }: MyPasseng
                         <div>
                           <div className="font-bold text-[#222222]">{p.passenger_full_name ?? p.passenger_username}</div>
                           <div className="text-sm text-[#717171] mt-1">
-                            {p.seats_booked} hely{!listingId ? ` · ${p.from_city} → ${p.to_city}` : ""}
+                            {p.seats_booked} hely{!listingId ? ` · ${p.from_city} → ${p.to_city}` : ""} · {p.ride_date} · {p.ride_time?.slice(0, 5)}
                           </div>
                           {p.passenger_email && <div className="text-xs text-[#717171] mt-0.5">{p.passenger_email}</div>}
                         </div>
