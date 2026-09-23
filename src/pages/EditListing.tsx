@@ -124,7 +124,7 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
             <p className="text-sm text-amber-800 leading-relaxed">
               {locked ? (
                 <>
-                  Ennek a hirdetésnek már van legalább 1 foglalása, ezért az <strong>ár és az indulás időpontja (dátum, idő) nem módosítható</strong>. Csak a szabad helyek száma növelhető, legfeljebb a jármű férőhelyéig ({maxSeats}).
+                  Ennek a hirdetésnek már van legalább 1 foglalása, ezért az <strong>ár és az indulás időpontja (dátum, idő) nem módosítható</strong>. A szabad helyek száma módosítható, legalább a már lefoglalt helyek ({listing.seats_booked} db) számáig csökkenthető, legfeljebb a jármű férőhelyéig ({maxSeats}) növelhető.
                 </>
               ) : (
                 <>
@@ -206,15 +206,13 @@ export default function EditListing({ goBack, listingId, backLabel }: EditListin
                   type="number"
                   value={form.seats}
                   onChange={(e) => set("seats", e.target.value)}
-                  min={locked ? listing.seats_total : (listing.seats_booked || 1)}
+                  min={listing.seats_booked || 1}
                   max={maxSeats}
                   required
                   className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
                 />
                 <p className="text-xs text-[#717171] mt-1">
-                  {locked
-                    ? `Min. ${listing.seats_total} (csak növelhető) · Max. ${maxSeats} (a jármű férőhelye)`
-                    : `Min. ${listing.seats_booked} (már foglalt) · Max. ${maxSeats} (a jármű férőhelye)`}
+                  {`Min. ${listing.seats_booked} (már foglalt) · Max. ${maxSeats} (a jármű férőhelye)`}
                 </p>
               </div>
             </div>

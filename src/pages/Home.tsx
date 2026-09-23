@@ -7,9 +7,10 @@ interface HomeProps {
   navigate: (page: Page) => void;
   selectRide: (id: string) => void;
   isLoggedIn: boolean;
+  currentUserId: string | null;
 }
 
-export default function Home({ navigate, selectRide, isLoggedIn }: HomeProps) {
+export default function Home({ navigate, selectRide, isLoggedIn, currentUserId }: HomeProps) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [date, setDate] = useState("");
@@ -143,6 +144,11 @@ export default function Home({ navigate, selectRide, isLoggedIn }: HomeProps) {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>
+                {currentUserId && ride.driver_id === currentUserId && (
+                  <div className="absolute top-3 right-3 bg-white text-[#222222] text-xs font-bold px-2.5 py-1 rounded-full shadow">
+                    Saját hirdetés
+                  </div>
+                )}
                 <div className="absolute bottom-3 left-3 text-white font-bold text-lg">
                   {ride.from_city} → {ride.to_city}
                 </div>

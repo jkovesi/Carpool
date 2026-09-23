@@ -8,9 +8,10 @@ interface RideDetailProps {
   goBack: () => void;
   isLoggedIn: boolean;
   rideId: string | null;
+  currentUserId: string | null;
 }
 
-export default function RideDetail({ navigate, goBack, isLoggedIn, rideId }: RideDetailProps) {
+export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, currentUserId }: RideDetailProps) {
   const [ride, setRide] = useState<RideDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [seats, setSeats] = useState(1);
@@ -66,21 +67,25 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId }: Rid
 
   return (
     <div className="min-h-screen bg-[#F7F7F7]">
-      {/* Header image */}
-      <div className="relative h-64 bg-gray-200">
-        <RidePhoto destination={ride.to_city} className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"/>
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 pt-6">
         <button
           onClick={goBack}
-          className="absolute top-4 left-4 bg-white rounded-full p-2 shadow hover:shadow-md transition-shadow"
+          className="flex items-center gap-2 text-sm text-[#717171] hover:text-[#222222] mb-5 transition-colors"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#222222" strokeWidth="2.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="15,18 9,12 15,6"/>
           </svg>
+          Vissza
         </button>
-        <div className="absolute bottom-5 left-5 text-white">
-          <div className="text-2xl font-extrabold">{ride.from_city} → {ride.to_city}</div>
-          <div className="text-sm text-white/80 mt-1">{ride.ride_date} · {ride.ride_time?.slice(0, 5)}</div>
+
+        <div className="mb-4">
+          <div className="text-2xl font-extrabold text-[#222222]">{ride.from_city} → {ride.to_city}</div>
+          <div className="text-sm text-[#717171] mt-1">{ride.ride_date} · {ride.ride_time?.slice(0, 5)}</div>
+        </div>
+
+        {/* Header image */}
+        <div className="h-56 bg-gray-200 rounded-2xl overflow-hidden">
+          <RidePhoto destination={ride.to_city} className="w-full h-full object-cover" />
         </div>
       </div>
 
@@ -152,6 +157,17 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId }: Rid
         </div>
 
         {/* Booking card */}
+        {currentUserId && ride.driver_id === currentUserId ? (
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-2xl p-5 border border-[#DDDDDD] sticky top-24">
+              <div className="text-center py-4">
+                <div className="text-sm text-[#717171]">
+                  Ez a saját hirdetésed, foglalást nem tudsz rá leadni. Itt csak megtekintheted.
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="lg:col-span-1">
           <div className="bg-white rounded-2xl p-5 border border-[#DDDDDD] sticky top-24">
             {booked ? (
@@ -211,6 +227,7 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId }: Rid
             )}
           </div>
         </div>
+        )}
       </div>
     </div>
   );

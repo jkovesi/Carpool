@@ -69,6 +69,7 @@ export default function App() {
   }, []);
 
   const isLoggedIn = !!session;
+  const currentUserId = session?.user?.id ?? null;
 
   const navigate = (page: Page) => {
     setPageStack((s) => [...s, currentPage]);
@@ -138,13 +139,13 @@ export default function App() {
         />
       )}
 
-      {currentPage === "home" && <Home navigate={navigate} selectRide={selectRide} isLoggedIn={isLoggedIn} />}
+      {currentPage === "home" && <Home navigate={navigate} selectRide={selectRide} isLoggedIn={isLoggedIn} currentUserId={currentUserId} />}
       {currentPage === "login" && (
         <Login navigate={navigate} goBack={goBack} notice={authNotice} clearNotice={() => setAuthNotice(null)} />
       )}
       {currentPage === "register" && <Register navigate={navigate} goBack={goBack} onRegistered={setPendingEmail} />}
       {currentPage === "email-confirm" && <EmailConfirm navigate={navigate} email={pendingEmail} />}
-      {currentPage === "ride-detail" && <RideDetail navigate={navigate} goBack={goBack} isLoggedIn={isLoggedIn} rideId={selectedRideId} />}
+      {currentPage === "ride-detail" && <RideDetail navigate={navigate} goBack={goBack} isLoggedIn={isLoggedIn} rideId={selectedRideId} currentUserId={currentUserId} />}
 
       {currentPage === "create-listing" && (
         isLoggedIn
