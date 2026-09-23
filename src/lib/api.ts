@@ -41,6 +41,11 @@ export interface RideDetails {
   seats_booked: number;
   seats_available: number;
   created_at: string;
+  // Az indulás pontos időpontja (ride_date + ride_time), a szerveren
+  // Europe/Budapest időzóna szerint (nyári/téli időszámítást is helyesen
+  // kezelve) UTC időbélyeggé alakítva — erre kell szűrni/hasonlítani, nem a
+  // ride_date-re önmagában.
+  departs_at: string;
   // Csak a my_listings nézetben elérhető (saját hirdetés esetén) — a jármű
   // tényleges férőhely-kapacitásának lekéréséhez (KAN-14).
   vehicle_id?: string;
@@ -254,7 +259,11 @@ export async function listAvailableRides(filters: {
     .from("ride_details")
     .select("*")
     .eq("status", "active")
-    .gte("ride_date", new Date().toISOString().slice(0, 10))
+    // A departs_at a szerveren, Europe/Budapest időzóna szerint (DST-t is
+    // helyesen kezelve) számolt UTC időbélyeg — ezért közvetlenül
+    // hasonlítható a kliens "most" időpontjával, dátum-only hiba nélkül,
+    // és nem számít, milyen időzónában fut a böngésző.
+    .gte("departs_at", new Date().toISOString())
     .order("ride_date", { ascending: true });
 
   if (filters.from) query = query.ilike("from_city", `%${filters.from}%`);
