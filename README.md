@@ -1,1 +1,1 @@
-Created by Jozsef Kovesi and Orsolya Meckl
+Created by Orsolya Meckl and Jozsef Kovesi
