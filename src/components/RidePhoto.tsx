@@ -1,32 +1,50 @@
-import { useState } from "react";
-import { getDestinationImageUrl } from "../utils/destinationImage";
-import RideIllustration from "./RideIllustration";
+import { useRef, useState } from "react";
+import placeholder from "../assets/ride-placeholder.jpg";
+import { requestDestinationPhotoReheal } from "../lib/api";
 
 interface RidePhotoProps {
   destination: string;
+  // A ride_details nézetből érkező, célállomásonként cache-elt AI-fotó —
+  // lásd KAN-39, spec 2.5/4.26. Amíg nincs "ready" állapotú, kész találat
+  // (Folyamatban / Hibás / még nincs sor), a statikus ride-placeholder.jpg
+  // jelenik meg helyette. Ez az AI-keresés melletti egyetlen tartalék —
+  // a korábbi kurált fotólista, hash-alapú tartalékkészlet és
+  // SVG-illusztráció (CURATED_BY_DESTINATION / FALLBACK_POOL /
+  // RideIllustration) ennek a funkciónak nem része, kivezetésre került.
+  photoUrl?: string | null;
+  photoStatus?: "pending" | "ready" | "failed" | null;
   className?: string;
 }
 
-// A hirdetés-kártyák / útrészletező illusztrációja: a célállomáshoz tartozó
-// (kurált vagy determinisztikus tartalék) fotó a src/utils/destinationImage.ts
-// segítségével — ez a helper korábban elkészült, de nem volt sehol bekötve,
-// ezért futott le a régi, törött statikus placeholder kép helyette. Ha a kép
-// betöltése bármiért meghiúsul, egy mindig működő SVG-illusztrációra esünk
-// vissza, hogy soha ne maradjon törött kép a felületen.
-export default function RidePhoto({ destination, className }: RidePhotoProps) {
-  const [failed, setFailed] = useState(false);
+export default function RidePhoto({ destination, photoUrl, photoStatus, className }: RidePhotoProps) {
+  const [broken, setBroken] = useState(false);
+  const reheatRequested = useRef(false);
 
-  if (failed) {
-    return <RideIllustration className={className} />;
+  const hasReadyPhoto = photoStatus === "ready" && !!photoUrl && !broken;
+
+  if (hasReadyPhoto) {
+    return (
+      <img
+        src={photoUrl!}
+        alt=""
+        loading="lazy"
+        className={className}
+        onError={() => {
+          setBroken(true);
+          // Önjavítás: a link időközben törötté vált — kérjünk egy új
+          // AI-keresést ugyanarra a célállomásra (a régi linket a friss
+          // találat felülírja), de csak egyszer komponensenként.
+          if (!reheatRequested.current) {
+            reheatRequested.current = true;
+            requestDestinationPhotoReheal(destination);
+          }
+        }}
+      />
+    );
   }
 
-  return (
-    <img
-      src={getDestinationImageUrl(destination, { w: 600, h: 350 })}
-      alt=""
-      loading="lazy"
-      onError={() => setFailed(true)}
-      className={className}
-    />
-  );
+  // Folyamatban / Hibás / még nincs cache-sor / törött link — statikus
+  // tartalékkép, hálózati függőség nélkül, hogy soha ne maradjon törött
+  // vagy hiányzó kép a felületen.
+  return <img src={placeholder} alt="" className={className} />;
 }

@@ -58,6 +58,12 @@ export interface RideDetails {
   // seats_booked (csak aktív foglalásokból számított) mező ezután 0-t
   // mutatna. A funkció bevezetése előtt törölt hirdetéseknél null (KAN-37).
   cancelled_seats_snapshot?: number | null;
+  // A célállomáshoz (to_city) tartozó, AI-kereséssel talált és cache-elt
+  // fotó — célállomásonként közös, nem hirdetésenkénti adat (KAN-39, spec
+  // 2.5/4.26). Amíg nincs "ready" állapotú, kész találat, a kliens a
+  // statikus src/assets/ride-placeholder.jpg-t jeleníti meg helyette.
+  destination_photo_url?: string | null;
+  destination_photo_status?: "pending" | "ready" | "failed" | null;
 }
 
 export interface Passenger {
@@ -388,4 +394,15 @@ export async function countNewPassengers(): Promise<number> {
   const { data, error } = await supabase.rpc("count_new_passengers");
   if (error) throw new Error(error.message);
   return (data as number) ?? 0;
+}
+
+// Célállomás-fotó önjavítás (KAN-39, spec 4.26): a RidePhoto komponens ezt
+// hívja, ha egy már cache-elt kép linkje törötten töltődik be. Szándékosan
+// "fire-and-forget" — a hívó nem vár rá és nem blokkol miatta, a tényleges
+// újrakeresés a háttérben, a felület megjelenítését nem lassítva fut le (a
+// kliens időközben a statikus ride-placeholder.jpg-t mutatja).
+export function requestDestinationPhotoReheal(destination: string) {
+  supabase.rpc("request_destination_photo_reheal", { p_destination: destination }).then(({ error }) => {
+    if (error) console.error("Célállomás-fotó önjavítás sikertelen:", error.message);
+  });
 }

@@ -141,6 +141,8 @@ export default function Home({ navigate, selectRide, isLoggedIn, currentUserId }
               <div className="relative h-44 bg-gray-100 overflow-hidden">
                 <RidePhoto
                   destination={ride.to_city}
+                  photoUrl={ride.destination_photo_url}
+                  photoStatus={ride.destination_photo_status}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>

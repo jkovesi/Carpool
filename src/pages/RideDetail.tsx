@@ -85,7 +85,12 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, curre
 
         {/* Header image */}
         <div className="h-56 bg-gray-200 rounded-2xl overflow-hidden">
-          <RidePhoto destination={ride.to_city} className="w-full h-full object-cover" />
+          <RidePhoto
+            destination={ride.to_city}
+            photoUrl={ride.destination_photo_url}
+            photoStatus={ride.destination_photo_status}
+            className="w-full h-full object-cover"
+          />
         </div>
       </div>
 
