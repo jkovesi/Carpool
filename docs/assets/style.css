@@ -323,16 +323,27 @@ section {
 }
 
 .shot {
+  position: relative;
+  overflow: hidden;
   border: 1px dashed var(--border);
   border-radius: var(--radius);
   aspect-ratio: 16 / 10;
+  color: var(--text-muted);
+  background: var(--bg-alt);
+}
+
+/* Wraps the icon/title/filename so it can be centered on its own while the
+   <img> (a sibling, see below) is positioned independently on top of it. */
+.shot-placeholder {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  color: var(--text-muted);
-  background: var(--bg-alt);
   padding: 20px;
   text-align: center;
 }
@@ -357,6 +368,52 @@ section {
   padding: 2px 6px;
   border-radius: 6px;
   font-size: 11.5px;
+}
+
+/* Screenshot images: kept in normal layout (position: absolute, NOT
+   display:none) so a browser with loading="lazy" still gives them a real
+   box to measure against the viewport and actually fetches them — a
+   display:none image never triggers a lazy load at all. They start
+   fully transparent; JS (onload/onerror on the <img>, see docs/index.html)
+   toggles .has-image on the card once a real screenshot has loaded, so a
+   dropped PNG appears automatically and a missing one just leaves the
+   placeholder visible underneath, no build step needed. */
+.shot img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top;
+  opacity: 0;
+}
+
+.shot.has-image {
+  border-style: solid;
+}
+
+.shot.has-image img {
+  opacity: 1;
+}
+
+.shot.has-image .shot-placeholder {
+  position: absolute;
+  inset: auto 0 0 0;
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 8px;
+  text-align: left;
+  padding: 10px 14px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+}
+
+.shot.has-image .shot-placeholder svg,
+.shot.has-image .shot-placeholder span {
+  display: none;
+}
+
+.shot.has-image .shot-placeholder strong {
+  color: #fff;
 }
 
 /* Tech stack */
