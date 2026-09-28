@@ -1,0 +1,7 @@
+project_id = "yctezzkwrzncgsvzhbjk"
+
+[functions.notify-booking]
+verify_jwt = false
+
+[functions.search-destination-photo]
+verify_jwt = false
