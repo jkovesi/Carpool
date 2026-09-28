@@ -25,6 +25,50 @@ ez a commit ezt a hiányt pótolja.
 redirect URL-ek, e-mail sablonok), és a tényleges adatokat (5 db tábla:
 `profiles`, `vehicles`, `listings`, `bookings`, `destination_photo_cache`).
 
+⚠️ **Ez az állítás egyszer, ténylegesen sérült — lásd a "Biztonsági
+incidens" szakaszt lent.** Két korai (2026-09-18-i) migráció szó szerint,
+nyílt szövegben tartalmazta a `booking_webhook_secret` akkori értékét; ezt
+a GitHub beépített titok-keresője (GitGuardian) 2026-09-28-án jelezte,
+mire a titkot azonnal rotáltuk és a fájlokat itt szerkesztve eltávolítottuk
+belőlük az értéket.
+
+## ⚠️ Biztonsági incidens (2026-09-28) — nyílt titok a git történetben
+
+A `20260918133624_kan15_16_v5_booking_notification_webhook.sql` és a
+`20260918133716_kan15_16_v5_harden_booking_webhook.sql` migráció EREDETI,
+Supabase-ből exportált szövege szó szerint tartalmazta a `booking_webhook_secret`
+akkor érvényes, valódi értékét (`L__PxaLiEnn32btmbVvC5e_28Wn88BilkZS5bH5oyx0`)
+— ezt a 2026-09-28-i exportáláskor (l. lejjebb) én (Claude) nem szűrtem ki,
+és tévesen azt állítottam, hogy semmilyen titok nem került a repóba. A
+GitHub beépített titok-keresője (GitGuardian) ezt még aznap észlelte és
+e-mailben jelezte.
+
+**Megtett lépések:**
+1. A `vault.decrypted_secrets`-ben tárolt `booking_webhook_secret` értékét
+   azonnal lecseréltük egy új, véletlenszerűen generált értékre
+   (`vault.update_secret(...)`) — az adatbázis oldali fele a rotálásnak
+   megtörtént.
+2. A fenti két migrációs fájlban a nyílt szöveges értéket
+   `[REDACTED-ROTATED-2026-09-28]` jelölésre cseréltük.
+
+**Amit NEKED (a repó tulajdonosának) még el kell végezned — enélkül a
+foglalás-értesítő e-mailek NÉMÁN leállnak:**
+1. Nyisd meg a Supabase Dashboardot → a projekt → Edge Functions →
+   Secrets (vagy CLI-vel: `supabase secrets set BOOKING_WEBHOOK_SECRET=<új érték> --project-ref yctezzkwrzncgsvzhbjk`).
+2. Állítsd be a `BOOKING_WEBHOOK_SECRET` új értékét — az adatbázis oldalon
+   már ez az érvényes érték, ezt a chatben adtam meg neked.
+3. (Opcionális, csak nyilvántartás célból) A GitGuardian/GitHub felületén
+   jelöld megoldottnak/rotáltnak a talált incidenst.
+
+**Miért nem írtuk át emiatt is a teljes git történetet:** a régi, immár
+rotált (érvénytelen) érték továbbra is ott marad a korábbi commit(ok)
+tartalmában — ez már önmagában nem biztonsági kockázat (a titok
+haszontalanná vált), csak "kozmetikai" nyom. Egy újabb `filter-branch`
+alapú történet-átírás pontosan ugyanazokat a szinkronizációs
+bonyodalmakat okozná a kolléganőd helyi repójával, mint a korábbi
+contributor-átírás — ezért ezt nem végeztük el automatikusan. Szólj, ha
+mégis szeretnéd, hogy elvégezzük.
+
 ## Hogyan tudod ebből visszaépíteni/reprodukálni a backendet?
 
 ### A) Egy MÁSIK (üres) Supabase projektbe

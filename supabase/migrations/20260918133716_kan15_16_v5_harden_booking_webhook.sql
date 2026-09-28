@@ -1,8 +1,12 @@
 -- 1) A webhook megosztott titkát a Vault-ban tároljuk (titkosítva), nem
 --    nyílt szövegként a függvény forráskódjában (ami pg_proc-on keresztül
 --    más szerepkörök számára is olvasható lehetne).
+-- 2026-09-28: az eredetileg itt szereplő, nyílt szövegű titkot (amit a
+-- GitHub secret scanning [GitGuardian] valós, publikusan kitett titokként
+-- jelzett) eltávolítottuk és rotáltuk -- a régi érték mostantól érvénytelen.
+-- Lásd supabase/README.md a részletekért és a rotálás lépéseiért.
 select vault.create_secret(
-  'L__PxaLiEnn32btmbVvC5e_28Wn88BilkZS5bH5oyx0',
+  '[REDACTED-ROTATED-2026-09-28]',
   'booking_webhook_secret',
   'Megosztott titok a bookings INSERT trigger -> notify-booking Edge Function hívásához'
 );

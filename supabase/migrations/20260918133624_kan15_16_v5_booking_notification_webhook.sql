@@ -12,7 +12,11 @@ begin
       url := 'https://yctezzkwrzncgsvzhbjk.supabase.co/functions/v1/notify-booking',
       headers := jsonb_build_object(
         'Content-Type', 'application/json',
-        'x-webhook-secret', 'L__PxaLiEnn32btmbVvC5e_28Wn88BilkZS5bH5oyx0'
+        -- 2026-09-28: az eredetileg itt szereplő, nyílt szövegű titkot
+        -- (amit a GitHub secret scanning [GitGuardian] valós, publikusan
+        -- kitett titokként jelzett) eltávolítottuk és rotáltuk -- a régi
+        -- érték mostantól érvénytelen. Lásd supabase/README.md.
+        'x-webhook-secret', '[REDACTED-ROTATED-2026-09-28]'
       ),
       body := jsonb_build_object('booking_id', NEW.id),
       timeout_milliseconds := 8000
