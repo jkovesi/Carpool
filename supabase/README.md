@@ -10,7 +10,7 @@ ez a commit ezt a hiányt pótolja.
 
 ## Mit tartalmaz, mit nem
 
-- `migrations/*.sql` — a 24 db, időrendi sorrendben lefuttatott migráció,
+- `migrations/*.sql` — a 27 db, időrendi sorrendben lefuttatott migráció,
   szó szerint úgy, ahogy a Supabase eltárolta (`supabase_migrations.schema_migrations`
   tábla `statements` oszlopa). Együtt ezek adják a teljes séma (táblák,
   RLS-szabályok, view-k, RPC-függvények, trigger-ek) jelenlegi állapotát.
@@ -66,3 +66,73 @@ végeztük el (SQL-migrációk és Edge Function-deploy-ok közvetlenül a
 Supabase API-n keresztül), anélkül hogy ezeket helyi fájlokként is
 elmentettük és a GitHub repóba commitoltuk volna. Ez a mappa ezt az utólagos
 exportot/szinkronizálást pótolja egy pillanatképpel (2026-09-28-i állapot).
+
+## Biztonsági javítások (2026-09-28, Security Advisor)
+
+A Supabase Security Advisor 7 ERROR-szintű találatot jelzett a `my_bookings`,
+`my_passengers`, `my_listings`, `my_vehicles`, `ride_details` view-kre
+(`auth_users_exposed` + `security_definer_view`). Ezeket a
+`20260928103526_fix_security_advisor_findings_email_and_view_invoker.sql`
+migráció javítja:
+
+- **`auth_users_exposed` (my_bookings, my_passengers) — teljesen javítva.**
+  A két view eddig közvetlenül JOIN-olta az `auth.users` táblát a
+  másik fél (sofőr/utas) e-mail címének megjelenítéséhez. Mostantól az
+  e-mail címet a `public.profiles` táblában tartjuk karban (egy új,
+  `auth.users`-t figyelő trigger szinkronizálja), a view-k pedig már csak
+  a `profiles` táblát kérdezik le — `auth.users`-t egyáltalán nem érintik.
+- **`security_definer_view` (my_listings, my_vehicles) — teljesen javítva.**
+  Mindkét view saját WHERE-feltétellel amúgy is a saját sorra (`auth.uid()`)
+  szűkíti a találatot, ugyanúgy, ahogy az alattuk lévő táblák RLS-szabálya
+  is tenné — a `security_invoker = true` bekapcsolása tisztán szigorítás,
+  viselkedésbeli változás nélkül.
+- **`security_definer_view` (ride_details, my_bookings, my_passengers) —
+  SZÁNDÉKOSAN változatlan marad.** Ez a három view csak SECURITY DEFINER
+  módban tud működni a jelenlegi tervezés mellett:
+  - `ride_details` az egész nyilvános kereséshez/útrészletekhez kell, hogy
+    MINDENKI hirdetését megmutassa (nem csak a sajátunkat), miközben a
+    `listings` tábla RLS-szabálya kifejezetten csak a saját hirdetésre ad
+    hozzáférést — plusz a view sor szintjén (nem csak táblaszinten) rejti
+    el a `driver_full_name`/`car_plate` mezőket, amit RLS önmagában nem
+    tud megoldani (RLS csak sor-, nem oszlopszintű). A definer-mód
+    levétele vagy a keresés törne el (mindenki csak a saját hirdetését
+    látná), vagy a `listings` táblát kellene RLS-szinten teljesen
+    nyilvánossá tenni — de az utóbbi megkerülné a gondosan implementált
+    adatvédelmi rejtést (bárki közvetlenül, a `/rest/v1/listings`
+    végponton át is látná a sofőr teljes nevét és rendszámát, foglalás
+    nélkül is).
+  - `my_bookings`/`my_passengers` a MÁSIK fél (sofőr, illetve utas)
+    `profiles` sorát is le kell, hogy kérdezze (telefon, e-mail a
+    kapcsolatfelvételhez) — ez csak úgy lehetséges invoker-módban, ha a
+    `profiles` táblán egy új, "van-e köztünk aktív foglalási kapcsolat"
+    logikájú RLS-szabályt vezetünk be. Ez megvalósítható, de önmagában is
+    egy nagyobb, alaposan átgondolandó/tesztelendő változás (rosszul
+    megírt szabály könnyen vagy túl szűkre, vagy — rosszabb esetben — túl
+    tágra nyithatná a profil-hozzáférést), ezért ezt szándékosan nem
+    végeztük el ebben a körben.
+
+**Külön, ennél komolyabb, egyelőre NYITVA hagyott találat:**
+`public.email_for_username(p_username)` — ezt a `signInWithIdentifier`
+(felhasználónévvel történő bejelentkezés, `src/lib/api.ts`) hívja, ezért
+muszáj `anon` (be nem jelentkezett) szerepkörből is hívhatónak lennie. A
+függvény viszont a megadott felhasználónévhez tartozó **valódi e-mail
+címet adja vissza bárkinek, jelszó/bejelentkezés nélkül** — ez egy
+felhasználónév → e-mail cím "oráklum", amivel névsorolással (username
+enumeration) tömegesen gyűjthetők ki valós e-mail címek. Ennek rendes
+javítása architekturális változás: a bejelentkezés username-feloldó
+lépését egy szerver oldali (Edge Function) folyamatba kellene költöztetni,
+ami a feloldott e-mail címet sosem küldi vissza a böngészőnek, csak a
+kész munkamenetet (session token-t). Ezt nem végeztük el automatikusan,
+mert a kliens oldali bejelentkezési folyamat átírását igényli — szólj, ha
+szeretnéd, hogy ezt is megcsináljuk.
+
+**Egyéb, WARN-szintű, változatlanul hagyott találatok** (megtekinthetők a
+Supabase Dashboard → Advisors alatt): a `book_ride`, `cancel_booking`,
+`cancel_listing`, `create_listing`, `remove_vehicle`,
+`request_destination_photo_reheal`, `update_booking`, `update_listing`,
+`update_vehicle`, `count_new_passengers`, `mark_passengers_viewed`
+függvények mind szándékosan SECURITY DEFINER + `authenticated`-hívhatók —
+ezek az app RPC-alapú írási API-ja, ez a tervezett működésük. A `pg_net`
+extension `public` sémában futása és az Auth "leaked password protection"
+kikapcsolt állapota alacsony prioritású, opcionális Dashboard-beállítások,
+ezeket sem érintettük.
