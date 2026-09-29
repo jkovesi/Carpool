@@ -423,6 +423,16 @@ section {
   text-align: left;
   padding: 10px 14px;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  /* The caption's own box still spans the full card height (the base
+     .shot-placeholder rule sets height: 100%, and this rule never
+     overrides it — only the gradient background, which fades to fully
+     transparent well before the top, makes it look like a short bottom
+     strip). Left clickable, this invisible-at-the-top box would sit on
+     top of the <img> (it comes after it in the DOM) and swallow every
+     click meant for the lightbox. pointer-events: none lets clicks pass
+     straight through to the image beneath, while the caption text stays
+     fully visible. */
+  pointer-events: none;
 }
 
 .shot.has-image .shot-placeholder svg,
