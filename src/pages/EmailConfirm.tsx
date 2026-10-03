@@ -34,12 +34,15 @@ export default function EmailConfirm({ navigate, email }: EmailConfirmProps) {
           </svg>
         </div>
 
-        <h1 className="text-2xl font-extrabold text-[#222222] mb-3">Erősítsd meg az e-mail címed!</h1>
-        <p className="text-[#717171] text-sm leading-relaxed mb-2">
-          Elküldtük a megerősítő linket{email ? <> a(z) <strong className="text-[#222222]">{email}</strong> címre</> : " a megadott e-mail címre"}.
+        <h1 className="text-2xl font-extrabold text-[#222222] mb-3">Nézd meg a postafiókodat!</h1>
+        {/* BUG-16 / SQ-12 (v12): semleges szöveg — nem árulja el, hogy a cím
+            már regisztrált-e (a felsorolás elleni védelem miatt). */}
+        <p className="text-[#717171] text-sm leading-relaxed mb-2" data-testid="signup-neutral-message">
+          Ha{email ? <> a(z) <strong className="text-[#222222]">{email}</strong></> : " a megadott"} címmel még nincs fiók, elküldtük rá a megerősítő linket.
         </p>
         <p className="text-[#717171] text-sm leading-relaxed mb-8">
-          Kattints a levélben lévő linkre a regisztráció befejezéséhez — a fiókod csak ezután lesz aktív.
+          Kattints a levélben lévő linkre a regisztráció befejezéséhez — a fiókod csak ezután lesz aktív. Ha ezzel a címmel már regisztráltál,{" "}
+          <button onClick={() => navigate("login")} className="font-semibold text-[#FF385C] hover:underline">jelentkezz be</button>.
         </p>
 
         <div className="bg-[#F7F7F7] rounded-2xl p-5 mb-8 text-left">

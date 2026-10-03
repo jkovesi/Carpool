@@ -113,6 +113,10 @@ export interface MyBooking {
   created_at: string;
 }
 
+function escapeLike(value: string): string {
+  return value.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 function friendlyError(error: { message: string } | null): never | void {
   if (!error) return;
   throw new Error(error.message);
@@ -122,6 +126,61 @@ function friendlyError(error: { message: string } | null): never | void {
 // Auth (KAN-2)
 // ============================================================
 
+// ------------------------------------------------------------
+// Regisztrációs mezők normalizálása és ellenőrzése (BUG-13, BUG-14).
+// Ugyanezeket a szabályokat a szerver (handle_new_user / profiles trigger)
+// is kikényszeríti — a kliensoldali ellenőrzés csak a gyors visszajelzést
+// szolgálja.
+// ------------------------------------------------------------
+
+export const USERNAME_PATTERN = /^[A-Za-z0-9._-]{3,30}$/;
+const AUTH_ERROR = "Hibás felhasználónév/e-mail vagy jelszó.";
+
+export function normalizeSpaces(value: string): string {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function normalizePhone(value: string): string {
+  return normalizeSpaces(value);
+}
+
+// Magyar és nemzetközi formátum: opcionális +, utána számjegyek, szóköz,
+// kötőjel, zárójel; összesen 9–15 számjegy.
+export function validatePhone(value: string): string | null {
+  const v = normalizePhone(value);
+  if (!/^\+?[0-9 ()-]+$/.test(v)) return "A telefonszám csak számjegyeket, szóközt, kötőjelet, zárójelet és kezdő +-t tartalmazhat.";
+  const digits = v.replace(/\D/g, "").length;
+  if (digits < 9 || digits > 15) return "A telefonszám 9–15 számjegyből álljon (pl. +36 30 123 4567).";
+  return null;
+}
+
+export function validateFullName(value: string): string | null {
+  const v = normalizeSpaces(value);
+  if (v.length < 2) return "Add meg a teljes nevedet (legalább 2 karakter).";
+  if (v.length > 100) return "A név legfeljebb 100 karakter lehet.";
+  return null;
+}
+
+export function validateUsername(value: string): string | null {
+  const v = value.trim();
+  if (!USERNAME_PATTERN.test(v)) {
+    return "A felhasználónév 3–30 karakter lehet, és csak betűt (ékezet nélkül), számot, pontot, kötőjelet vagy aláhúzást tartalmazhat.";
+  }
+  return null;
+}
+
+export function validateEmail(value: string): string | null {
+  const v = value.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v)) return "Adj meg érvényes e-mail címet (pl. peter@email.hu).";
+  return null;
+}
+
+export async function isUsernameAvailable(username: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_username_available", { p_username: username.trim() });
+  if (error) throw new Error("Nem sikerült ellenőrizni a felhasználónevet. Próbáld újra.");
+  return data === true;
+}
+
 export async function signUp(params: {
   email: string;
   password: string;
@@ -129,10 +188,13 @@ export async function signUp(params: {
   fullName: string;
   phone: string;
 }) {
-  const { email, password, username, fullName, phone } = params;
+  const email = params.email.trim().toLowerCase();
+  const username = params.username.trim();
+  const fullName = normalizeSpaces(params.fullName);
+  const phone = normalizePhone(params.phone);
   const { data, error } = await supabase.auth.signUp({
     email,
-    password,
+    password: params.password,
     options: {
       data: { username, full_name: fullName, phone },
       // A megerősítő e-mail mindig a tényleges böngésző-címre irányítson
@@ -142,23 +204,58 @@ export async function signUp(params: {
     },
   });
   if (error) throw new Error(error.message);
+  // BUG-16 / SQ-12 (v12): ha a cím már regisztrált, a Supabase álcázott
+  // választ ad (üres identities). Szándékosan NEM különböztetjük meg — a
+  // felület mindkét esetben ugyanazt a semleges üzenetet mutatja, hogy ne
+  // lehessen kideríteni, mely címek regisztráltak.
   return data;
 }
 
-// Bejelentkezés felhasználónévvel VAGY e-mail címmel.
+// Bejelentkezés felhasználónévvel VAGY e-mail címmel (BUG-01, BUG-15).
+// Felhasználónévnél a feloldás a szerveren, a "login" Edge Functionben
+// történik: az e-mail cím soha nem kerül vissza a klienshez, és minden
+// sikertelen kísérlet ugyanazt az üzenetet adja.
 export async function signInWithIdentifier(identifier: string, password: string) {
-  let email = identifier;
-  if (!identifier.includes("@")) {
-    const { data: resolvedEmail, error: lookupError } = await supabase.rpc("email_for_username", {
-      p_username: identifier,
-    });
-    if (lookupError) throw new Error(lookupError.message);
-    if (!resolvedEmail) throw new Error("Nincs ilyen felhasználónévvel regisztrált fiók.");
-    email = resolvedEmail as string;
+  const id = identifier.trim();
+  if (!id || !password) throw new Error(AUTH_ERROR);
+
+  if (id.includes("@")) {
+    const { data, error } = await supabase.auth.signInWithPassword({ email: id.toLowerCase(), password });
+    if (error) throw new Error(loginErrorMessage(error.message));
+    return data;
   }
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw new Error("Hibás felhasználónév/e-mail vagy jelszó.");
-  return data;
+
+  const { data, error } = await supabase.functions.invoke("login", {
+    body: { identifier: id, password },
+  });
+  if (error || !data?.access_token || !data?.refresh_token) {
+    let message = AUTH_ERROR;
+    try {
+      const ctx = (error as { context?: Response } | null)?.context;
+      const body = ctx ? await ctx.json() : null;
+      if (body?.error) message = body.error;
+    } catch {
+      // marad az általános üzenet
+    }
+    throw new Error(message);
+  }
+  const { data: sessionData, error: sessionError } = await supabase.auth.setSession({
+    access_token: data.access_token,
+    refresh_token: data.refresh_token,
+  });
+  if (sessionError) throw new Error(AUTH_ERROR);
+  return sessionData;
+}
+
+function loginErrorMessage(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("email not confirmed")) {
+    return "Az e-mail címed még nincs megerősítve. Kattints a regisztrációkor kapott levélben lévő linkre.";
+  }
+  if (m.includes("rate limit") || m.includes("too many")) {
+    return "Túl sok próbálkozás. Várj néhány percet, majd próbáld újra.";
+  }
+  return AUTH_ERROR;
 }
 
 export async function signOut() {
@@ -190,8 +287,17 @@ export async function getMyProfile(): Promise<Profile | null> {
 export async function updateMyProfile(patch: { full_name?: string; username?: string; phone?: string }) {
   const { data: userData } = await supabase.auth.getUser();
   if (!userData.user) throw new Error("Nincs bejelentkezve.");
-  const { error } = await supabase.from("profiles").update(patch).eq("id", userData.user.id);
-  friendlyError(error);
+  const clean = {
+    ...(patch.full_name !== undefined ? { full_name: normalizeSpaces(patch.full_name) } : {}),
+    ...(patch.username !== undefined ? { username: patch.username.trim() } : {}),
+    ...(patch.phone !== undefined ? { phone: normalizePhone(patch.phone) } : {}),
+  };
+  const { error } = await supabase.from("profiles").update(clean).eq("id", userData.user.id);
+  if (error) {
+    // BUG-13: kis/nagybetűtől független egyediség (profiles_username_lower_key).
+    if (error.message.includes("profiles_username")) throw new Error("Ez a felhasználónév már foglalt.");
+    throw new Error(error.message);
+  }
 }
 
 export async function changePassword(currentPassword: string, newPassword: string) {
@@ -225,10 +331,10 @@ export async function addVehicle(v: { type: string; plate: string; seats: number
   if (!userData.user) throw new Error("Nincs bejelentkezve.");
   const { error } = await supabase.from("vehicles").insert({
     owner_id: userData.user.id,
-    type: v.type,
-    plate: v.plate,
+    type: v.type.trim(),
+    plate: v.plate.trim(),
     seats: v.seats,
-    color: v.color || null,
+    color: v.color?.trim() || null,
   });
   friendlyError(error);
 }
@@ -243,10 +349,10 @@ export async function removeVehicle(id: string) {
 export async function updateVehicle(v: { id: string; type: string; plate: string; seats: number; color?: string }) {
   const { error } = await supabase.rpc("update_vehicle", {
     p_vehicle_id: v.id,
-    p_type: v.type,
-    p_plate: v.plate,
+    p_type: v.type.trim(),
+    p_plate: v.plate.trim(),
     p_seats: v.seats,
-    p_color: v.color || null,
+    p_color: v.color?.trim() || null,
   });
   friendlyError(error);
 }
@@ -264,7 +370,9 @@ export async function getVehicleById(id: string): Promise<Vehicle | null> {
 export async function listAvailableRides(filters: {
   from?: string;
   to?: string;
-  date?: string;
+  // BUG-05: időszak-szűrő (mindkét határ benne van a tartományban).
+  dateFrom?: string;
+  dateTo?: string;
   minSeats?: number;
 }): Promise<RideDetails[]> {
   let query = supabase
@@ -278,9 +386,14 @@ export async function listAvailableRides(filters: {
     .gte("departs_at", new Date().toISOString())
     .order("ride_date", { ascending: true });
 
-  if (filters.from) query = query.ilike("from_city", `%${filters.from}%`);
-  if (filters.to) query = query.ilike("to_city", `%${filters.to}%`);
-  if (filters.date) query = query.eq("ride_date", filters.date);
+  // BUG-06: a vezető/záró szóközöket levágjuk, és a LIKE-helyettesítő
+  // karaktereket (%, _) szó szerint kezeljük.
+  const from = escapeLike(filters.from?.trim() ?? "");
+  const to = escapeLike(filters.to?.trim() ?? "");
+  if (from) query = query.ilike("from_city", `%${from}%`);
+  if (to) query = query.ilike("to_city", `%${to}%`);
+  if (filters.dateFrom) query = query.gte("ride_date", filters.dateFrom);
+  if (filters.dateTo) query = query.lte("ride_date", filters.dateTo);
   if (filters.minSeats) query = query.gte("seats_available", filters.minSeats);
 
   const { data, error } = await query;
@@ -364,6 +477,19 @@ export async function cancelBooking(bookingId: string) {
 export async function updateBooking(bookingId: string, seats: number) {
   const { error } = await supabase.rpc("update_booking", { p_booking_id: bookingId, p_seats: seats });
   friendlyError(error);
+}
+
+// BUG-12: a részletoldalon foglalás után a sofőr telefonszáma és e-mail címe
+// (a my_bookings nézet csak aktív foglalásnál adja vissza — BUG-08).
+export async function getMyActiveBookingForListing(listingId: string): Promise<MyBooking | null> {
+  const { data, error } = await supabase
+    .from("my_bookings")
+    .select("*")
+    .eq("listing_id", listingId)
+    .eq("booking_status", "active")
+    .maybeSingle();
+  if (error) return null;
+  return data;
 }
 
 export async function listMyBookings(): Promise<MyBooking[]> {

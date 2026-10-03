@@ -145,7 +145,7 @@ export default function App() {
       )}
       {currentPage === "register" && <Register navigate={navigate} goBack={goBack} onRegistered={setPendingEmail} />}
       {currentPage === "email-confirm" && <EmailConfirm navigate={navigate} email={pendingEmail} />}
-      {currentPage === "ride-detail" && <RideDetail navigate={navigate} goBack={goBack} isLoggedIn={isLoggedIn} rideId={selectedRideId} currentUserId={currentUserId} />}
+      {currentPage === "ride-detail" && <RideDetail navigate={navigate} goBack={goBack} isLoggedIn={isLoggedIn} rideId={selectedRideId} currentUserId={currentUserId} openPassengers={selectListingToPassengers} />}
 
       {currentPage === "create-listing" && (
         isLoggedIn

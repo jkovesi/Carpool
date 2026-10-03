@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
-import { getMyProfile, updateMyProfile } from "../lib/api";
+import { getMyProfile, updateMyProfile, validateFullName, validatePhone, validateUsername } from "../lib/api";
 import { supabase } from "../lib/supabase";
 
 interface ProfileProps {
@@ -43,6 +43,12 @@ export default function Profile({ navigate }: ProfileProps) {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    // BUG-14: ugyanazok a szabályok, mint regisztrációkor (a szerver is ellenőriz).
+    const validationError = validateFullName(form.name) ?? validateUsername(form.username) ?? validatePhone(form.phone);
+    if (validationError) {
+      setError(validationError);
+      return;
+    }
     setSaving(true);
     try {
       await updateMyProfile({ full_name: form.name, username: form.username, phone: form.phone });

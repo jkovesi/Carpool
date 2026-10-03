@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.search-destination-photo]
 verify_jwt = false
+
+[functions.login]
+verify_jwt = false

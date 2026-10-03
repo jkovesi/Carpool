@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Page } from "../types";
-import { RideDetails, bookRide, getRideDetails } from "../lib/api";
+import { MyBooking, RideDetails, bookRide, getMyActiveBookingForListing, getRideDetails } from "../lib/api";
 import RidePhoto from "../components/RidePhoto";
 
 interface RideDetailProps {
@@ -9,15 +9,18 @@ interface RideDetailProps {
   isLoggedIn: boolean;
   rideId: string | null;
   currentUserId: string | null;
+  // BUG-10: saját, foglalással rendelkező hirdetésnél "Utasaim" link.
+  openPassengers?: (listingId: string) => void;
 }
 
-export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, currentUserId }: RideDetailProps) {
+export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, currentUserId, openPassengers }: RideDetailProps) {
   const [ride, setRide] = useState<RideDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [seats, setSeats] = useState(1);
   const [booked, setBooked] = useState(false);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [myBooking, setMyBooking] = useState<MyBooking | null>(null);
 
   useEffect(() => {
     if (!rideId) {
@@ -28,7 +31,9 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, curre
       setRide(r);
       setLoading(false);
     });
-  }, [rideId]);
+    if (isLoggedIn) getMyActiveBookingForListing(rideId).then(setMyBooking);
+    else setMyBooking(null);
+  }, [rideId, isLoggedIn]);
 
   const handleBook = async () => {
     if (!isLoggedIn) {
@@ -41,8 +46,9 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, curre
     try {
       await bookRide(ride.id, seats);
       setBooked(true);
-      const refreshed = await getRideDetails(ride.id);
+      const [refreshed, booking] = await Promise.all([getRideDetails(ride.id), getMyActiveBookingForListing(ride.id)]);
       if (refreshed) setRide(refreshed);
+      setMyBooking(booking);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Hiba történt a foglalás során.");
     } finally {
@@ -152,9 +158,22 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, curre
               <div className="flex-1">
                 <div className="font-bold text-[#222222]">{ride.driver_full_name ?? ride.driver_username}</div>
                 {ride.driver_full_name ? (
-                  <div className="mt-1 text-xs text-[#717171]">@{ride.driver_username}</div>
+                  <>
+                    <div className="mt-1 text-xs text-[#717171]">@{ride.driver_username}</div>
+                    {/* BUG-12: aktív foglalásnál a sofőr elérhetősége is látszik. */}
+                    {myBooking?.driver_phone && (
+                      <div className="mt-1 text-sm text-[#222222]" data-testid="driver-phone">
+                        📞 <a href={`tel:${myBooking.driver_phone.replace(/\s/g, "")}`} className="hover:underline">{myBooking.driver_phone}</a>
+                      </div>
+                    )}
+                    {myBooking?.driver_email && (
+                      <div className="text-sm text-[#222222]" data-testid="driver-email">
+                        ✉️ <a href={`mailto:${myBooking.driver_email}`} className="hover:underline">{myBooking.driver_email}</a>
+                      </div>
+                    )}
+                  </>
                 ) : (
-                  <div className="mt-1 text-xs text-[#717171]">🔒 Teljes név és telefonszám foglalás után látható</div>
+                  <div className="mt-1 text-xs text-[#717171]">🔒 Teljes név, telefonszám és e-mail cím foglalás után látható</div>
                 )}
               </div>
             </div>
@@ -169,6 +188,15 @@ export default function RideDetail({ navigate, goBack, isLoggedIn, rideId, curre
                 <div className="text-sm text-[#717171]">
                   Ez a saját hirdetésed, foglalást nem tudsz rá leadni. Itt csak megtekintheted.
                 </div>
+                {openPassengers && ride.seats_booked > 0 && (
+                  <button
+                    onClick={() => openPassengers(ride.id)}
+                    data-testid="ride-detail-passengers-link"
+                    className="mt-4 text-sm font-semibold text-[#FF385C] hover:underline"
+                  >
+                    Utasaim ({ride.seats_booked} foglalt hely) →
+                  </button>
+                )}
               </div>
             </div>
           </div>

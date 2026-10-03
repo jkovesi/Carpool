@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Page } from "../types";
 import { Vehicle, createListing, listMyVehicles } from "../lib/api";
 
@@ -21,6 +21,10 @@ export default function CreateListing({ navigate, goBack, backLabel }: CreateLis
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  // BUG-04 (spec 4.2): jármű választásakor a helyek száma a jármű
+  // férőhelyével töltődik elő; amíg a felhasználó nem írja át, járműváltáskor
+  // az új jármű férőhelyét vesszük át.
+  const seatsAutoFilled = useRef(false);
 
   useEffect(() => {
     listMyVehicles().then(setVehicles);
@@ -43,10 +47,14 @@ export default function CreateListing({ navigate, goBack, backLabel }: CreateLis
       if (k === "vehicle") {
         const newVehicle = vehicles.find((veh) => veh.id === v);
         const newMax = newVehicle?.seats ?? 8;
-        if (next.seats && parseInt(next.seats, 10) > newMax) {
+        if (newVehicle && (!next.seats || seatsAutoFilled.current)) {
+          next.seats = String(newMax);
+          seatsAutoFilled.current = true;
+        } else if (next.seats && parseInt(next.seats, 10) > newMax) {
           next.seats = String(newMax);
         }
       }
+      if (k === "seats") seatsAutoFilled.current = false;
       return next;
     });
   };
@@ -54,12 +62,16 @@ export default function CreateListing({ navigate, goBack, backLabel }: CreateLis
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    if (!form.from.trim() || !form.to.trim()) {
+      setError("Az induló és a célállomás nem lehet üres.");
+      return;
+    }
     setSubmitting(true);
     try {
       await createListing({
         vehicleId: form.vehicle,
-        from: form.from,
-        to: form.to,
+        from: form.from.trim(),
+        to: form.to.trim(),
         date: form.date,
         time: form.time,
         price: parseInt(form.price, 10),

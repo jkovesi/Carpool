@@ -13,7 +13,10 @@ interface HomeProps {
 export default function Home({ navigate, selectRide, isLoggedIn, currentUserId }: HomeProps) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
-  const [date, setDate] = useState("");
+  // BUG-05 (spec 4.8): időszakra is lehet szűrni (-tól / -ig). Ha csak az
+  // egyik van megadva, nyitott a tartomány; ha mindkettő ugyanaz, egy napra szűr.
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [seats, setSeats] = useState("");
   const [rides, setRides] = useState<RideDetails[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,7 +28,8 @@ export default function Home({ navigate, selectRide, isLoggedIn, currentUserId }
     listAvailableRides({
       from: from || undefined,
       to: to || undefined,
-      date: date || undefined,
+      dateFrom: dateFrom || undefined,
+      dateTo: dateTo || undefined,
       minSeats: seats ? parseInt(seats, 10) : undefined,
     })
       .then(setRides)
@@ -53,7 +57,7 @@ export default function Home({ navigate, selectRide, isLoggedIn, currentUserId }
 
         {/* Search card */}
         <div className="max-w-4xl mx-auto bg-white rounded-2xl shadow-2xl p-4 sm:p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
             <div>
               <label className="block text-xs font-semibold text-[#717171] mb-1 uppercase tracking-wide">Honnan</label>
               <input
@@ -75,11 +79,28 @@ export default function Home({ navigate, selectRide, isLoggedIn, currentUserId }
               />
             </div>
             <div>
-              <label className="block text-xs font-semibold text-[#717171] mb-1 uppercase tracking-wide">Mikor</label>
+              <label className="block text-xs font-semibold text-[#717171] mb-1 uppercase tracking-wide">Mikortól</label>
               <input
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+                value={dateFrom}
+                onChange={(e) => {
+                  setDateFrom(e.target.value);
+                  if (dateTo && e.target.value && dateTo < e.target.value) setDateTo(e.target.value);
+                }}
+                aria-label="Indulás legkorábban"
+                data-testid="search-date-from"
+                className="w-full border border-[#DDDDDD] rounded-xl px-3 py-2.5 text-[#222222] text-sm font-medium focus:outline-none focus:border-[#222222] transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-[#717171] mb-1 uppercase tracking-wide">Meddig</label>
+              <input
+                type="date"
+                value={dateTo}
+                min={dateFrom || undefined}
+                onChange={(e) => setDateTo(e.target.value)}
+                aria-label="Indulás legkésőbb"
+                data-testid="search-date-to"
                 className="w-full border border-[#DDDDDD] rounded-xl px-3 py-2.5 text-[#222222] text-sm font-medium focus:outline-none focus:border-[#222222] transition-colors"
               />
             </div>

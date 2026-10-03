@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { Page } from "../types";
-import { signUp } from "../lib/api";
+import {
+  signUp,
+  isUsernameAvailable,
+  validateEmail,
+  validateFullName,
+  validatePhone,
+  validateUsername,
+} from "../lib/api";
 
 interface RegisterProps {
   navigate: (page: Page) => void;
@@ -13,11 +20,25 @@ function friendlySignupError(message: string): string {
   if (m.includes("username") && (m.includes("duplicate") || m.includes("unique"))) {
     return "Ez a felhasználónév már foglalt.";
   }
-  if (m.includes("already registered") || (m.includes("email") && m.includes("exists"))) {
-    return "Ezzel az e-mail címmel már létezik fiók.";
+  if (m.includes("rate limit")) {
+    return "Túl sok regisztrációs kísérlet rövid időn belül. Várj egy kicsit, majd próbáld újra.";
   }
-  return message;
+  if (m.includes("password") && (m.includes("weak") || m.includes("characters") || m.includes("pwned"))) {
+    return "A jelszó túl gyenge vagy túl gyakori. Válassz legalább 8 karakteres, egyedi jelszót.";
+  }
+  if (m.includes("signups not allowed") || m.includes("signup is disabled") || m.includes("signups are disabled")) {
+    return "A regisztráció átmenetileg nem érhető el. Próbáld újra később.";
+  }
+  if (m.includes("invalid") && m.includes("email")) {
+    return "Adj meg érvényes e-mail címet.";
+  }
+  // BUG-13: a Supabase a szerveroldali ellenőrzés hibáját általános
+  // "Database error saving new user" üzenettel adja vissza — nyers angol
+  // szöveg helyett érthető magyar üzenetet mutatunk.
+  return "A regisztráció nem sikerült. Ellenőrizd az adatokat (a felhasználónév lehet, hogy már foglalt), majd próbáld újra.";
 }
+
+type FieldErrors = Partial<Record<"name" | "username" | "email" | "phone", string>>;
 
 export default function Register({ navigate, onRegistered }: RegisterProps) {
   const [form, setForm] = useState({
@@ -30,16 +51,42 @@ export default function Register({ navigate, onRegistered }: RegisterProps) {
   });
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [loading, setLoading] = useState(false);
 
-  const set = (key: string, value: string | boolean) =>
+  const set = (key: string, value: string | boolean) => {
     setForm((f) => ({ ...f, [key]: value }));
+    setFieldErrors((fe) => ({ ...fe, [key]: undefined }));
+  };
+
+  // BUG-14: üres / csak szóközös / hibás formátumú mezők kiszűrése beküldés
+  // előtt (a szerver ugyanezt kikényszeríti).
+  const validate = (): FieldErrors => {
+    const fe: FieldErrors = {};
+    const nameErr = validateFullName(form.name);
+    if (nameErr) fe.name = nameErr;
+    const userErr = validateUsername(form.username);
+    if (userErr) fe.username = userErr;
+    const emailErr = validateEmail(form.email);
+    if (emailErr) fe.email = emailErr;
+    const phoneErr = validatePhone(form.phone);
+    if (phoneErr) fe.phone = phoneErr;
+    return fe;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    const fe = validate();
+    setFieldErrors(fe);
+    if (Object.keys(fe).length > 0) return;
     setLoading(true);
     try {
+      // BUG-13: a felhasználónév kis/nagybetűtől függetlenül egyedi.
+      if (!(await isUsernameAvailable(form.username))) {
+        setFieldErrors({ username: "Ez a felhasználónév már foglalt." });
+        return;
+      }
       await signUp({
         email: form.email,
         password: form.password,
@@ -47,14 +94,19 @@ export default function Register({ navigate, onRegistered }: RegisterProps) {
         fullName: form.name,
         phone: form.phone,
       });
-      onRegistered(form.email);
+      // BUG-16 / SQ-12 (v12): már regisztrált címnél is ugyanide jutunk —
+      // az EmailConfirm oldal semleges szövege mindkét esetre igaz.
+      onRegistered(form.email.trim().toLowerCase());
       navigate("email-confirm");
     } catch (err) {
-      setError(friendlySignupError(err instanceof Error ? err.message : "Hiba történt a regisztráció során."));
+      setError(friendlySignupError(err instanceof Error ? err.message : ""));
     } finally {
       setLoading(false);
     }
   };
+
+  const FieldError = ({ msg }: { msg?: string }) =>
+    msg ? <p className="text-xs text-red-600 mt-1" role="alert">{msg}</p> : null;
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-4 py-12">
@@ -80,6 +132,7 @@ export default function Register({ navigate, onRegistered }: RegisterProps) {
               required
               className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
             />
+            <FieldError msg={fieldErrors.name} />
           </div>
 
           <div>
@@ -89,9 +142,11 @@ export default function Register({ navigate, onRegistered }: RegisterProps) {
               value={form.username}
               onChange={(e) => set("username", e.target.value)}
               placeholder="kovacs.peter"
+              autoComplete="username"
               required
               className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
             />
+            <FieldError msg={fieldErrors.username} />
           </div>
 
           <div>
@@ -104,6 +159,7 @@ export default function Register({ navigate, onRegistered }: RegisterProps) {
               required
               className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
             />
+            <FieldError msg={fieldErrors.email} />
           </div>
 
           <div>
@@ -116,6 +172,7 @@ export default function Register({ navigate, onRegistered }: RegisterProps) {
               required
               className="w-full border border-[#DDDDDD] rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-[#222222] transition-colors"
             />
+            <FieldError msg={fieldErrors.phone} />
             <p className="text-xs text-[#717171] mt-1">Csak foglalás után kerül megosztásra a másik féllel</p>
           </div>
 

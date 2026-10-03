@@ -48,6 +48,11 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    // BUG-03: csak szóközből álló típus / rendszám nem fogadható el.
+    if (!form.type.trim() || !form.plate.trim()) {
+      setError("A jármű típusa és rendszáma nem lehet üres.");
+      return;
+    }
     setSubmitting(true);
     try {
       await addVehicle({ type: form.type, plate: form.plate, seats: parseInt(form.seats, 10), color: form.color });
@@ -70,6 +75,9 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
       await removeVehicle(confirmRemoveId);
       setConfirmRemoveId(null);
       refresh();
+    } catch (err) {
+      setConfirmRemoveId(null);
+      setError(err instanceof Error ? err.message : "Hiba történt a jármű törlése során.");
     } finally {
       setRemoving(false);
     }
@@ -92,6 +100,10 @@ export default function Vehicles({ goBack, backLabel }: VehiclesProps) {
   const submitEdit = async (e: React.FormEvent, id: string) => {
     e.preventDefault();
     setEditError("");
+    if (!editForm.type.trim() || !editForm.plate.trim()) {
+      setEditError("A jármű típusa és rendszáma nem lehet üres.");
+      return;
+    }
     setEditSubmitting(true);
     try {
       await updateVehicle({

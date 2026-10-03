@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Page } from "../types";
 import { countNewPassengers } from "../lib/api";
 
@@ -21,6 +21,36 @@ function PassengerBadge({ count }: { count: number }) {
 
 export default function Navbar({ currentPage, isLoggedIn, navigate, logout, openPassengers }: NavbarProps) {
   const [newPassengerCount, setNewPassengerCount] = useState(0);
+  // A legördülő menü kattintásra/koppintásra nyílik (BUG-09): érintőképernyőn
+  // nincs hover, ezért a korábbi, csak CSS group-hoverrel nyíló menü mobilon
+  // elérhetetlen volt. Asztali gépen a rámutatás továbbra is megnyitja.
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [currentPage, isLoggedIn]);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [menuOpen]);
+
+  const go = (page: Page) => {
+    setMenuOpen(false);
+    navigate(page);
+  };
 
   useEffect(() => {
     if (!isLoggedIn) {
@@ -58,9 +88,17 @@ export default function Navbar({ currentPage, isLoggedIn, navigate, logout, open
               >
                 + Hirdetés feladása
               </button>
-              {/* Avatar + dropdown: a trigger és a panel közös group-ban van, hogy a hover ténylegesen megnyissa */}
-              <div className="relative group">
-                <div className="flex items-center gap-1 border border-[#DDDDDD] rounded-full px-3 py-2 hover:shadow-md transition-shadow cursor-pointer">
+              {/* Avatar + dropdown: kattintásra/koppintásra nyílik (BUG-09); asztali gépen a hover is megnyitja */}
+              <div className="relative group" ref={menuRef}>
+                <button
+                  type="button"
+                  aria-haspopup="menu"
+                  aria-expanded={menuOpen}
+                  aria-label="Felhasználói menü"
+                  data-testid="user-menu-toggle"
+                  onClick={() => setMenuOpen((o) => !o)}
+                  className="flex items-center gap-1 border border-[#DDDDDD] rounded-full px-3 py-2 hover:shadow-md transition-shadow cursor-pointer"
+                >
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#717171" strokeWidth="2">
                     <line x1="3" y1="6" x2="21" y2="6"/>
                     <line x1="3" y1="12" x2="21" y2="12"/>
@@ -74,18 +112,23 @@ export default function Navbar({ currentPage, isLoggedIn, navigate, logout, open
                       <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-[#FF385C] rounded-full border border-white"/>
                     )}
                   </div>
-                </div>
-                <div className="hidden group-hover:block absolute right-0 top-12 bg-white border border-[#DDDDDD] rounded-2xl shadow-xl w-56 py-2 z-50">
-                  <button onClick={() => navigate("profile")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Profilom</button>
-                  <button onClick={() => navigate("vehicles")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Járműveim</button>
-                  <button onClick={() => navigate("my-bookings")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Foglalásaim</button>
-                  <button onClick={() => navigate("my-listings")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Hirdetéseim</button>
-                  <button onClick={openPassengers} className="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">
+                </button>
+                <div
+                  role="menu"
+                  data-testid="user-menu"
+                  className={`${menuOpen ? "block" : "hidden"} group-hover:block absolute right-0 top-12 bg-white border border-[#DDDDDD] rounded-2xl shadow-xl w-56 py-2 z-50`}
+                >
+                  <button onClick={() => go("create-listing")} className="sm:hidden w-full text-left px-4 py-3 text-sm font-semibold hover:bg-[#F7F7F7] transition-colors">+ Hirdetés feladása</button>
+                  <button onClick={() => go("profile")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Profilom</button>
+                  <button onClick={() => go("vehicles")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Járműveim</button>
+                  <button onClick={() => go("my-bookings")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Foglalásaim</button>
+                  <button onClick={() => go("my-listings")} className="w-full text-left px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">Hirdetéseim</button>
+                  <button onClick={() => { setMenuOpen(false); openPassengers(); }} className="w-full flex items-center px-4 py-3 text-sm font-medium hover:bg-[#F7F7F7] transition-colors">
                     Utasaim
                     <PassengerBadge count={newPassengerCount} />
                   </button>
                   <div className="border-t border-[#DDDDDD] my-2"/>
-                  <button onClick={logout} className="w-full text-left px-4 py-3 text-sm hover:bg-[#F7F7F7] transition-colors text-[#717171]">Kijelentkezés</button>
+                  <button onClick={() => { setMenuOpen(false); logout(); }} className="w-full text-left px-4 py-3 text-sm hover:bg-[#F7F7F7] transition-colors text-[#717171]">Kijelentkezés</button>
                 </div>
               </div>
               {/* Visible quick links */}
