@@ -20,6 +20,12 @@ function friendlySignupError(message: string): string {
   if (m.includes("username") && (m.includes("duplicate") || m.includes("unique"))) {
     return "Ez a felhasználónév már foglalt.";
   }
+  // Ha a Supabase Auth nem tudja kiküldeni a megerősítő levelet (pl. a Mailgun
+  // sandbox csak jóváhagyott címzetteknek kézbesít), a válasz 500-as
+  // "Error sending confirmation email" — ilyenkor fiók sem jön létre.
+  if (m.includes("sending") && m.includes("email")) {
+    return "A megerősítő e-mailt nem sikerült elküldeni, ezért a regisztráció nem jött létre. Próbáld újra később.";
+  }
   if (m.includes("rate limit")) {
     return "Túl sok regisztrációs kísérlet rövid időn belül. Várj egy kicsit, majd próbáld újra.";
   }
